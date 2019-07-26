@@ -1,7 +1,7 @@
 Actor MonsterScore : Inventory { Inventory.MaxAmount 999 }
 Actor MonsterScoreTemporary : MonsterScore {}
 Actor MonsterAlreadyTracked : Inventory { Inventory.MaxAmount 2147483647 }
-Actor "hpbar-testing-puff"
+Actor hpbar-testing-puff-base
 {
 RenderStyle None
 Decal None
@@ -14,7 +14,7 @@ Decal None
 +NOTRIGGER
 +DONTREFLECT
 +DONTSPLASH
-+SPECTRAL
++FOILINVUL
 +HITTRACER
 +PUFFONACTORS
 +PUFFGETSOWNER
@@ -22,7 +22,7 @@ Decal None
 States
 	{
 	Spawn:
-		TNT1 A 2 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0)
+		TNT1 A 2
 		Stop
 	Crash:
 		TNT1 A 2
@@ -30,7 +30,770 @@ States
 	}
 }
 
-Actor "hpbar-testing-thru-puff" : "hpbar-testing-puff"
+Actor hpbar-testing-puff0 : hpbar-testing-puff-base
 {
-+MTHRUSPECIES
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,0)
+		Stop
+	}
 }
+
+Actor hpbar-testing-thru-puff0 : hpbar-testing-puff0 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff1 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,1)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff1 : hpbar-testing-puff1 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff2 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,2)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff2 : hpbar-testing-puff2 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff3 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,3)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff3 : hpbar-testing-puff3 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff4 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,4)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff4 : hpbar-testing-puff4 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff5 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,5)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff5 : hpbar-testing-puff5 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff6 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,6)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff6 : hpbar-testing-puff6 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff7 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,7)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff7 : hpbar-testing-puff7 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff8 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,8)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff8 : hpbar-testing-puff8 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff9 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,9)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff9 : hpbar-testing-puff9 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff10 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,10)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff10 : hpbar-testing-puff10 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff11 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,11)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff11 : hpbar-testing-puff11 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff12 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,12)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff12 : hpbar-testing-puff12 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff13 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,13)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff13 : hpbar-testing-puff13 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff14 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,14)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff14 : hpbar-testing-puff14 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff15 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,15)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff15 : hpbar-testing-puff15 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff16 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,16)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff16 : hpbar-testing-puff16 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff17 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,17)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff17 : hpbar-testing-puff17 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff18 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,18)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff18 : hpbar-testing-puff18 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff19 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,19)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff19 : hpbar-testing-puff19 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff20 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,20)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff20 : hpbar-testing-puff20 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff21 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,21)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff21 : hpbar-testing-puff21 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff22 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,22)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff22 : hpbar-testing-puff22 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff23 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,23)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff23 : hpbar-testing-puff23 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff24 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,24)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff24 : hpbar-testing-puff24 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff25 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,25)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff25 : hpbar-testing-puff25 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff26 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,26)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff26 : hpbar-testing-puff26 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff27 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,27)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff27 : hpbar-testing-puff27 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff28 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,28)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff28 : hpbar-testing-puff28 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff29 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,29)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff29 : hpbar-testing-puff29 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff30 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,30)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff30 : hpbar-testing-puff30 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff31 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,31)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff31 : hpbar-testing-puff31 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff32 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,32)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff32 : hpbar-testing-puff32 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff33 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,33)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff33 : hpbar-testing-puff33 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff34 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,34)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff34 : hpbar-testing-puff34 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff35 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,35)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff35 : hpbar-testing-puff35 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff36 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,36)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff36 : hpbar-testing-puff36 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff37 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,37)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff37 : hpbar-testing-puff37 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff38 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,38)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff38 : hpbar-testing-puff38 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff39 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,39)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff39 : hpbar-testing-puff39 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff40 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,40)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff40 : hpbar-testing-puff40 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff41 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,41)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff41 : hpbar-testing-puff41 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff42 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,42)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff42 : hpbar-testing-puff42 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff43 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,43)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff43 : hpbar-testing-puff43 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff44 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,44)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff44 : hpbar-testing-puff44 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff45 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,45)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff45 : hpbar-testing-puff45 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff46 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,46)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff46 : hpbar-testing-puff46 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff47 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,47)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff47 : hpbar-testing-puff47 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff48 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,48)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff48 : hpbar-testing-puff48 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff49 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,49)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff49 : hpbar-testing-puff49 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff50 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,50)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff50 : hpbar-testing-puff50  { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff51 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,51)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff51 : hpbar-testing-puff51 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff52 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,52)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff52 : hpbar-testing-puff52 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff53 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,53)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff53 : hpbar-testing-puff53 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff54 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,54)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff54 : hpbar-testing-puff54 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff55 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,55)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff55 : hpbar-testing-puff55 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff56 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,56)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff56 : hpbar-testing-puff56 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff57 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,57)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff57 : hpbar-testing-puff57 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff58 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,58)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff58 : hpbar-testing-puff58 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff59 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,59)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff59 : hpbar-testing-puff59 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff60 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,60)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff60 : hpbar-testing-puff60 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff61 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,61)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff61 : hpbar-testing-puff61 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff62 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,62)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff62 : hpbar-testing-puff62 { +MTHRUSPECIES }
+
+Actor hpbar-testing-puff63 : hpbar-testing-puff-base
+{
+States
+	{
+	Spawn:
+		TNT1 A 5 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0,63)
+		Stop
+	}
+}
+
+Actor hpbar-testing-thru-puff63 : hpbar-testing-puff63 { +MTHRUSPECIES }
