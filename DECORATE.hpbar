@@ -1,0 +1,36 @@
+Actor MonsterScore : Inventory { Inventory.MaxAmount 999 }
+Actor MonsterScoreTemporary : MonsterScore {}
+Actor MonsterAlreadyTracked : Inventory { Inventory.MaxAmount 2147483647 }
+Actor "hpbar-testing-puff"
+{
+RenderStyle None
+Decal None
++NODECAL
++NOGRAVITY
++NOBLOCKMAP 
++PAINLESS
++BLOODLESSIMPACT
++NODAMAGETHRUST
++NOTRIGGER
++DONTREFLECT
++DONTSPLASH
++SPECTRAL
++HITTRACER
++PUFFONACTORS
++PUFFGETSOWNER
++SERVERSIDEONLY
+States
+	{
+	Spawn:
+		TNT1 A 2 Nodelay ACS_NamedExecuteAlways("HPBar_GetTarget",0)
+		Stop
+	Crash:
+		TNT1 A 2
+		Stop
+	}
+}
+
+Actor "hpbar-testing-thru-puff" : "hpbar-testing-puff"
+{
++MTHRUSPECIES
+}

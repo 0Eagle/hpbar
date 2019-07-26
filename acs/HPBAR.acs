@@ -1,0 +1,748 @@
+#library "HPBAR"
+#include "zcommon.acs"
+
+#define STYLE_FULL 1
+#define STYLE_MINIMAL 2
+
+#define FULL_HUD_WIDTH 800
+#define FULL_HUD_HEIGHT 600
+#define FULL_HOLDTIME 0.25
+#define FULL_HPBAR_X 400.0
+#define FULL_HPBAR_Y 40.0
+#define FULL_NAME_Y (FULL_HPBAR_Y + 25.0)
+#define FULL_INFO_Y (FULL_NAME_Y + 12.0)
+
+#define MINIMAL_HUD_WIDTH  1280
+#define MINIMAL_HUD_HEIGHT 960
+#define MINIMAL_HOLDTIME ((1.0 / 35) + 1)
+#define MINIMAL_FADETIME 0.1
+#define MINIMAL_HP_X 640.0
+#define MINIMAL_HP_Y 500.0
+
+#define TRACKER_HUD_WIDTH 1024
+#define TRACKER_HUD_HEIGHT 768
+
+#define MAX_TRACKERS 32
+#define NUM_RANKINGS 10
+
+#define INVALID_TID (-129)
+
+int tracked_tids[MAX_TRACKERS];
+int tracked_hps[MAX_TRACKERS];
+int tracked_max_hps[MAX_TRACKERS];
+bool tracked_friendly[MAX_TRACKERS];
+bool tracked_invul[MAX_TRACKERS];
+bool tracked_reflect[MAX_TRACKERS];
+bool tracked_broadcast[MAX_TRACKERS];
+int tracked_kills[MAX_TRACKERS];
+int maxhp_rankings[NUM_RANKINGS];
+int announcers_playing = 0;
+int announcer_priority = -1;
+int announcer_id = 0;
+bool firstblood = false;
+//==============================================================================
+function int to_fixed(int x)
+{
+	return (x << 16);
+}
+
+function int to_int(int x)
+{
+	return (x >> 16);
+}
+
+function int get_my_user_cvar(str cvar)
+{
+	return GetUserCVar(ConsolePlayerNumber(), cvar);
+}
+
+function void clear_tracklist_tid(void)
+{
+	for(int i = 0; i < MAX_TRACKERS; ++i)
+	{
+		tracked_tids[i] = INVALID_TID;
+	}
+}
+
+function void clear_tracklist_name(void)
+{
+	for(int i = 0; i < MAX_TRACKERS; ++i)
+	{
+		SetCVarString(strparam(s:"hpbar_tracked_names", d:i),"");
+	}
+}
+
+function bool already_selected(int x, int n)
+{
+	for(int i = 0; i < n; ++i)
+	{
+		if(x == maxhp_rankings[i])
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+function int align_left(int x)
+{
+	if(x >= 0)
+	{
+		return to_fixed(x) + 0.1;
+	}
+	return to_fixed(x) - 0.1;
+}
+
+function int align_right(int x)
+{
+	if(x >= 0)
+	{
+		return to_fixed(x) + 0.2;
+	}
+	return to_fixed(x) - 0.2;
+}
+
+function void show_full_hpbar(int hp, int max_hp, int hp_percentage, str name, bool invul, bool friendly)
+{
+    SetHudSize(FULL_HUD_WIDTH, FULL_HUD_HEIGHT, true);
+    SetFont("NORMAL");
+    HudMessageBold(d: hp, s: " / ", d: max_hp, s: " (", d: hp_percentage, s: "%)";HUDMSG_FADEOUT, 6000, CR_WHITE, FULL_HPBAR_X, FULL_HPBAR_Y, FULL_HOLDTIME);
+	if (hp_percentage <= 140)
+	{
+		int view_hp_percentage = to_int(hp_percentage*0.1);
+		SetFont(StrParam(s:"FILL",i:view_hp_percentage));
+	}
+	else
+	{
+		SetFont("FILL14");
+	}
+	for (int i = 0; i <= 100 && i <= hp_percentage; ++i)
+	{
+        HudMessageBold(s: "A"; HUDMSG_FADEOUT , 6001 + i, CR_UNTRANSLATED, FULL_HPBAR_X - 97.0 + to_fixed(i * 2), FULL_HPBAR_Y, FULL_HOLDTIME);
+    }
+    SetFont("HPBAR");
+    HudMessageBold(s: "A"; HUDMSG_FADEOUT, 6102, CR_UNTRANSLATED, FULL_HPBAR_X, FULL_HPBAR_Y, FULL_HOLDTIME);
+    SetFont("NORMAL");
+    HudMessageBold(s: name; HUDMSG_FADEOUT, 6103, CR_WHITE, FULL_HPBAR_X, FULL_NAME_Y, FULL_HOLDTIME);
+    int ln = 0;
+    if(invul)
+	{
+		HudMessageBold(s: "\c[i8]Invulnerable\c-"; HUDMSG_FADEOUT, 6104 + ln, CR_WHITE, FULL_HPBAR_X, FULL_INFO_Y + to_fixed(ln * 10), FULL_HOLDTIME);
+		++ln;
+    }
+    if(friendly)
+	{
+		HudMessageBold(s: "\c[x5]Friendly\c-"; HUDMSG_FADEOUT, 6104 + ln, CR_WHITE, FULL_HPBAR_X, FULL_INFO_Y + to_fixed(ln * 10), FULL_HOLDTIME);
+		++ln;
+	}
+}
+
+function str hpp_to_color(int p)
+{
+    if(p >= 100)return "\c[x5]";
+    else if(p >= 75)return "\c[a6]";
+    else if(p >= 50)return "\ck";
+    else if(p >= 25)return "\c[o4]";
+    return "\cr";
+}
+
+function int GetOrSetMonsterTrackNum(void)
+{
+	int TrackNum;
+	for(int i = 0; i < MAX_TRACKERS; ++i)
+	{
+		if(tracked_tids[i] == INVALID_TID)
+		{
+			TrackNum = random(0,2147483647);
+			for(int j = 0; i < MAX_TRACKERS; ++i)
+			{
+				if(tracked_tids[j] == TrackNum)
+				{
+					--i;
+					continue;
+				}
+				else if(tracked_tids[i] == INVALID_TID)
+				{
+					tracked_tids[i] = TrackNum;
+					return i;
+				}
+			}
+		}
+	}
+	return INVALID_TID;
+}
+
+function void show_minimal_hpbar(int hp_percentage)
+{
+    SetHudSize(MINIMAL_HUD_WIDTH, MINIMAL_HUD_HEIGHT, false);
+    SetFont("NORMAL");
+    HudMessageBold(s: hpp_to_color(hp_percentage), d: hp_percentage, s: "%\c-";HUDMSG_FADEOUT, 6000, CR_UNTRANSLATED, MINIMAL_HP_X, MINIMAL_HP_Y, MINIMAL_HOLDTIME, MINIMAL_FADETIME);
+}
+
+function void announce(int priority, str sound, str bigtext, str smalltext, str tinytext)
+{
+    if (priority >= announcer_priority)
+	{
+        // Increment here so the it is seen within the same tic.
+        announcers_playing += 1;
+        announcer_priority = priority;
+        SetCVarString("hpbar_announcer_sound",sound);
+        SetCVarString("hpbar_announcer_bigtext",bigtext);
+        SetCVarString("hpbar_announcer_smalltext",smalltext);
+        SetCVarString("hpbar_announcer_tinytext",tinytext);
+        SetCVar("hpbar_announcer_id",++announcer_id);
+        ACS_NamedExecuteAlways("HPBar_Announcer",0,announcer_id);
+        ACS_NamedExecuteAlways("HPBar_AnnouncerCooldown",0);
+    }
+}
+
+function str ccunescape_impl(str s, int n)
+{
+	for (int i = n; i < strlen(s); ++i)
+	{
+		if((i < strlen(s) - 1) && (GetChar(s, i) == '\\') && (GetChar(s, i + 1) == 'c'))
+		{
+			return strparam(s:strmid(s, n, i - n), s:"\c", s:ccunescape_impl(s, i + 2));
+		}
+	}
+	return strmid(s, n, 99999);
+}
+
+function str ccunescape(str s)
+{
+	return ccunescape_impl(s, 0);
+}
+
+function bool streq(str x, str y)
+{
+	return StrICmp(x, y) == 0;
+}
+
+#define NORMALIZE_CLASS_LIST_MAX 19
+
+str normalize_class_list[NORMALIZE_CLASS_LIST_MAX][2] = {
+	//
+    {"Spectre~","Spectre"},//1
+    {"Cacodemon~","Cacodemon"},//2
+	{"StealthCacodemon~","StealthCacodemon"},//3
+    {"HellKnight~","HellKnight"},//4
+	{"StealthHellKnight~","StealthHellKnight"},//5
+    {"BaronOfHell~","BaronOfHell"},//6
+	{"Terminator~","Terminator"},//7
+    {"Hexa-ShotgunZombie","HexaShotgunZombie"},//8
+    {"LegendaryCyberNoble~","LegendaryCyberNoble"},//9
+    {"Hades-TechZombie","HadesTechZombie"},//10
+    {"ImpureElemental~","ImpureElemental"},//11
+    {"ImpureSoul~","ImpureSoul"},//12
+    {"DarkCybruiser~","DarkCybruiser"},//13
+    {"Cydestroyer~","Cydestroyer"},//14
+	{"Cybruiser~","Cybruiser"},//15
+	{"Mancubus~","Mancubus"},//16
+	{"SoulKeeper~","SoulKeeper"},//17
+	{"Defiler~","Defiler"},//18
+	{"endmassive","endmassive"}//19
+};
+
+function str normalize_class(str class)
+{
+    // These can't be declared as cvars due to special characters, so we special case them here:
+	int i = 0;
+	int j = 1;
+	while((streq(normalize_class_list[i][0],"endmassive") == false) && (i < NORMALIZE_CLASS_LIST_MAX))
+	{
+		if(streq(class,normalize_class_list[i][0]) == true)
+		{
+			return normalize_class_list[i][j];
+		}
+		i++;
+	}
+	str s = GetCVarString(strparam(s:"hpbar_map_", s:class));
+	if (s != 0)
+	{
+		return s;
+	}
+	return class;
+}
+
+function str get_actor_name(void)
+{
+	if((ClassifyActor(0) & ACTOR_PLAYER) && (!(ClassifyActor(0) & ACTOR_MONSTER)))
+	{
+		return strparam(n: 0);
+    }
+	str class = GetActorClass(0);
+	str name = GetCVarString(strparam(s: "hpbar_name_", s: class));
+	if(name != 0)
+	{
+		return ccunescape(name);
+	}
+	name = GetCVarString(strparam(s: "hpbar_name_", s: normalize_class(class)));
+	if(name != 0)
+	{
+		return ccunescape(name);
+	}
+	return ccunescape(GetActorProperty(0, APROP_NameTag));
+}
+
+function bool should_track(void)
+{
+	str class = GetActorClass(0);
+	int boss = GetCVar(strparam(s:"hpbar_track_", s:class));
+	if(boss == 1)
+	{
+		return true;
+    }
+	else if(boss == -1)
+	{
+		return false;
+	}
+    boss = GetCVar(strparam(s:"hpbar_track_", s:normalize_class(class)));
+	if(boss == 1)
+	{
+		return true;
+	}
+	else if(boss == -1)
+	{
+        return false;
+    }
+	if (CheckFlag(0,"BOSS"))
+	{
+		return true;
+	}
+	return (GetActorProperty(0, APROP_SpawnHealth) >= GetCVar("hpbar_tracker_threshold"));
+}
+
+function bool get_actor_invul(void)
+{
+	bool invul = GetActorProperty(0,APROP_Invulnerable)|(!CheckFlag(0,"SHOOTABLE"))|(CheckFlag(0,"NODAMAGE"));
+	return invul;
+}
+
+function void common31233(int pn)
+{
+	int hp = GetActorProperty(0, APROP_Health);
+	int max_hp = GetActorProperty(0, APROP_SpawnHealth);
+	if(max_hp <= 0) max_hp = hp;
+	if((max_hp > 0) && (ClassifyActor(0) & ACTOR_ALIVE))
+	{
+		if(max_hp >= GetCVar("hpbar_threshold"))
+		{
+			SetCVarString(strparam(s:"hpbar_target_name", d:pn),get_actor_name());
+			ACS_NamedExecuteAlways("HPBar_LinebarView",0,pn,hp,max_hp);
+		}
+		if(GetCVar("hpbar_tracker") == true)
+		{
+			ACS_NamedExecuteAlways("HPBar_TrackerView",0,0);
+		}
+	}
+}
+
+function void request_broadcast_tracker_info(void)
+{
+    NamedRequestScriptPuke("HPBar_request_broadcast_tracker_info");
+}
+//==============================================================================
+script "HPBar_request_broadcast_tracker_info" (void) net
+{
+	for(int i = 0; i < MAX_TRACKERS; ++i)
+	{
+		if(tracked_tids[i] != INVALID_TID)
+		{
+			tracked_broadcast[i] = true;
+		}
+	}
+}
+
+script "Copy_tracked_tids_to_Clientside" (int i, int tid) CLIENTSIDE
+{
+    if(tid == INVALID_TID)
+	{
+        tracked_tids[i] = tid;
+    }
+	else
+	{
+        if(ClassifyActor(0) & ACTOR_ALIVE)
+		{
+            tracked_tids[i] = tid;
+            tracked_max_hps[i] = GetActorProperty(0, APROP_SpawnHealth);
+        }
+		else
+		{
+            tracked_tids[i] = INVALID_TID;
+        }
+    }
+}
+
+script "Copy_HP_and_Kills_to_Clientside" (int i, int hp, int kills) CLIENTSIDE
+{
+    tracked_hps[i] = hp;
+    tracked_kills[i] = kills;
+}
+
+script "Copy_Invul_Reflect_Friendly_to_Clientside" (int i, int invul, int reflect, int friendly) CLIENTSIDE
+{
+    tracked_invul[i] = invul;
+    tracked_reflect[i] = reflect;
+	tracked_friendly[i] = friendly;
+}
+
+script "HPBar_GetPlayerNumberFormTarget" (void)
+{
+	if((SetActivatorToTarget(0) == true) && (ClassifyActor(0) & ACTOR_PLAYER))
+	{
+		SetResultValue(PlayerNumber());
+	}
+	else
+	{
+		SetResultValue(-1);
+	}
+}
+//==============================================================================
+script "HPBar_Open" OPEN
+{
+	clear_tracklist_tid();
+	clear_tracklist_name();
+}
+
+script "HPBar_Enter" ENTER
+{
+	ACS_NamedExecuteAlways("HPBar_HitTarget",0);
+}
+
+script "HPBar_Respawn" RESPAWN
+{
+	ACS_NamedExecuteAlways("HPBar_HitTarget",0);
+}
+
+script "HPBar_HitTarget" (void)
+{
+	delay(1);
+	if(GetCVar("hpbar_rekt") == true)SetThingSpecial(0,ACS_NamedExecuteAlways,"HPBar_Rect",0,PlayerNumber());
+	while(ClassifyActor(0) & ACTOR_ALIVE)
+	{
+		if(ClassifyActor(0) & ACTOR_ALIVE)LineAttack(0,GetActorAngle(0),GetActorPitch(0),0,"hpbar-testing-puff","None",8192.0,FHF_NORANDOMPUFFZ|FHF_NOIMPACTDECAL,0);
+		delay(1);
+		if(ClassifyActor(0) & ACTOR_ALIVE)LineAttack(0,GetActorAngle(0),GetActorPitch(0),0,"hpbar-testing-thru-puff","None",8192.0,FHF_NORANDOMPUFFZ|FHF_NOIMPACTDECAL,0);
+		delay(1);
+	}
+}
+
+script "HPBar_GetTarget" (void)
+{
+	int pn = ACS_NamedExecuteWithResult("HPBar_GetPlayerNumberFormTarget");
+	if((pn > -1) && (SetActivator(0,AAPTR_TRACER) == 1))
+	{
+		common31233(pn);
+	}
+}
+
+script "HPBar_Rect" (int pn)//Скрипт выполняется от имени убившего игрока монстра или от имени самого игрока при самоубийстве.
+{
+    if(GetCVar("hpbar_tracker") == true)ACS_NamedExecuteAlways("HPBar_TrackerView",0,1);
+    GiveInventory("MonsterScore",1); // Total score
+    GiveInventory("MonsterScoreTemporary",1); // Temporary score
+    int score = CheckInventory("MonsterScore");
+    int score_temp = CheckInventory("MonsterScoreTemporary");
+    ACS_NamedExecuteAlways("HPBar_ShowScore",0,score,score_temp);
+    if(!firstblood)
+	{
+        if((PlayerNumber() == pn) || (ClassifyActor(0) & ACTOR_WORLD))
+		{
+            int gender = GetPlayerInfo(pn, PLAYERINFO_GENDER);
+            str killstr = "";
+            if (gender == 0) killstr = "Killed himself";
+            else if (gender == 1) killstr = "Killed herself";
+            else killstr = "Killed itself";
+            announce(1,"hpbar/firstblood","\c[d4]FIRST DUMB\c-",strparam(n:pn+1),killstr);
+        }
+		else
+		{
+            announce(1,"hpbar/firstblood","\c[d4]FIRST BLOOD\c-",get_actor_name(),"First kill on the map");
+        }
+        firstblood = true;
+    }
+    // Wait for 5 seconds. If the monster didn't score other kills in the mean time, reset its temporary score.
+    delay(35 * 5);
+    if (CheckInventory("MonsterScoreTemporary") == score_temp)
+	{
+        TakeInventory("MonsterScoreTemporary", score_temp);
+    }
+}
+
+script "HPBar_LinebarView" (int player, int hp, int max_hp) CLIENTSIDE
+{
+    if(ConsolePlayerNumber() == player)
+	{
+		int hp_percentage = 0;
+		if(max_hp != 0)
+		{
+			hp_percentage = hp * 100 / max_hp;
+		}
+		str name = GetCVarString(strparam(s:"hpbar_target_name", d:ConsolePlayerNumber()));
+		bool invul = get_actor_invul();
+		bool friendly = GetActorProperty(0, APROP_Friendly);
+		if(!friendly || get_my_user_cvar("hpbar_show_friendly"))
+		{
+			int style = get_my_user_cvar("hpbar_style");
+			if(style == STYLE_FULL)
+			{
+				show_full_hpbar(hp, max_hp, hp_percentage, name, invul, friendly);
+			}
+			else if(style == STYLE_MINIMAL)
+			{
+				show_minimal_hpbar(hp_percentage);
+			}
+		}
+	}
+}
+
+script "HPBar_TrackerView" (int force_track)//Отслеживание монстра попавшего в прицел, цикл проверки работает пока он жив.
+{
+    // We only track monsters. :)
+    if((ClassifyActor(0) & ACTOR_MONSTER) && (GetActorProperty(0, APROP_SpawnHealth) > 0) && (CheckInventory("MonsterAlreadyTracked") < 1))
+	{
+		// Should we track it?
+		if((force_track == 1) || (should_track() == true))
+		{
+			// Найти пустой слот и получить трек номер.
+			int i = GetOrSetMonsterTrackNum();
+			if(i == INVALID_TID)//Если не нашлось места в списке - остановить скрипт.
+			{
+				TakeInventory("MonsterAlreadyTracked",2147483647);
+				terminate;
+			}
+			GiveInventory("MonsterAlreadyTracked",tracked_tids[i]);//Выдать трекномер монстру для отслеживания повторов.
+			ACS_NamedExecuteWithResult("Copy_tracked_tids_to_Clientside",i,tracked_tids[i]);
+			tracked_max_hps[i] = GetActorProperty(0, APROP_SpawnHealth);
+			str name_cvar = strparam(s:"hpbar_tracked_names", d:i);
+			// Keep updating clients the HP and name of the monster while it is alive.
+			while((ClassifyActor(0) & ACTOR_ALIVE) && (CheckInventory("MonsterAlreadyTracked") == tracked_tids[i]))
+			{
+				if(tracked_broadcast[i] == true)
+				{
+					ACS_NamedExecuteWithResult("Copy_tracked_tids_to_Clientside",i,tracked_tids[i]);
+				}
+				// Send monster HP
+				int old_hp = tracked_hps[i];
+				int old_kills = tracked_kills[i];
+				tracked_hps[i] = GetActorProperty(0, APROP_Health);
+				tracked_kills[i] = CheckInventory("MonsterScore");
+				if((old_hp != tracked_hps[i]) || (old_kills != tracked_kills[i]) || (tracked_broadcast[i] == true))
+				{
+					ACS_NamedExecuteWithResult("Copy_HP_and_Kills_to_Clientside",i,tracked_hps[i],tracked_kills[i]);
+				}
+				// Send monster invul, reflect, friendly
+				bool old_invul = tracked_invul[i];
+				tracked_invul[i] = get_actor_invul();
+				bool old_reflect = tracked_reflect[i];
+				tracked_reflect[i] = CheckFlag(0,"REFLECTIVE");
+				bool old_friendly = tracked_friendly[i];
+				tracked_friendly[i] = GetActorProperty(0, APROP_Friendly);
+				if((old_invul != tracked_invul[i]) || (old_reflect != tracked_reflect[i]) || (old_friendly != tracked_friendly[i]) || (tracked_broadcast[i] == true))
+				{
+					ACS_NamedExecuteWithResult("Copy_Invul_Reflect_Friendly_to_Clientside",i,tracked_invul[i],tracked_reflect[i],tracked_friendly[i]);
+				}
+				// Send name of monster
+				str old_name = GetCVarString(name_cvar);
+				str name = get_actor_name();
+				if((old_name == 0) || (!streq(old_name, name)) || (tracked_broadcast[i] == true))
+				{
+					tracked_broadcast[i] = false;
+					SetCVarString(name_cvar, name);
+				}
+				delay(1);
+			}
+			// The monster is dead, remove it from the slot and tell clients to stop tracking it.
+			tracked_tids[i] = INVALID_TID;
+			TakeInventory("MonsterAlreadyTracked",2147483647);
+			SetCVarString(strparam(s:"hpbar_tracked_names", d:i),"");
+			ACS_NamedExecuteWithResult("Copy_tracked_tids_to_Clientside",i,INVALID_TID);
+		}
+	}
+}
+
+script "HPBar_Open-cs" OPEN CLIENTSIDE
+{
+	clear_tracklist_tid();
+	request_broadcast_tracker_info();
+	delay(1);
+    SetHudSize(TRACKER_HUD_WIDTH, TRACKER_HUD_HEIGHT, false);
+    while(true)
+	{
+		delay(1);
+		if(GetCVar("hpbar_tracker") == true)
+		{
+			int x = to_int((GetCVar("hpbar_tracker_x") - 0.5) * GetScreenWidth() / GetScreenHeight() * TRACKER_HUD_HEIGHT) + (TRACKER_HUD_WIDTH / 2);
+			int y = to_fixed(to_int((GetCVar("hpbar_tracker_y") - 0.5) * GetScreenHeight()) + (TRACKER_HUD_HEIGHT / 2));
+			for(int rank = 0; rank < NUM_RANKINGS; ++rank)
+			{
+				int hp_limit = 0;
+				int maxhp_limit = 0;
+				maxhp_rankings[rank] = -1;
+				for(int i = 0; i < MAX_TRACKERS; ++i)
+				{
+					int tid = tracked_tids[i];
+					if(tid != INVALID_TID)
+					{
+						if(already_selected(i, rank))continue;
+						int max_hp = tracked_max_hps[i];
+						int hp = tracked_hps[i];
+						bool friendly = tracked_friendly[i];
+						if((max_hp > maxhp_limit) && (!friendly || get_my_user_cvar("hpbar_show_friendly")))
+						{
+							maxhp_rankings[rank] = i;
+							maxhp_limit = max_hp;
+							hp_limit = hp;
+						}
+						else if((max_hp == maxhp_limit) && (hp > hp_limit) && (!friendly || get_my_user_cvar("hpbar_show_friendly")))
+						{
+							maxhp_rankings[rank] = i;
+							hp_limit = hp;
+						}
+					}
+				}
+				int n = maxhp_rankings[rank];
+				if(n == -1)break;
+				hp = tracked_hps[n];
+				max_hp = tracked_max_hps[n];
+				int hpp = 0;
+				if(max_hp != 0)
+				{
+					hpp = hp * 100 / max_hp;
+				}
+				str name = GetCVarString(strparam(s:"hpbar_tracked_names", d:n));
+				HudMessage(s: hpp_to_color(hpp), d: hp, s: "/", d: max_hp, s: "\c-";HUDMSG_FADEOUT, 7000 + rank, CR_WHITE, align_right(x + 80), y + rank * 12.0, 1.0 / 35 + 1, 0.1);
+				HudMessage(s: hpp_to_color(hpp), d: hpp, s: "%\c-";HUDMSG_FADEOUT, 7000 + NUM_RANKINGS + rank, CR_WHITE, align_right(x + 120), y + rank * 12.0, 1.0 / 35 + 1, 0.1);
+	            str statemsg = " ";
+				if(tracked_reflect[n])statemsg = strparam(s: statemsg, s: "\c[x5][REFLECT]\c-");
+				if(tracked_invul[n])statemsg = strparam(s: statemsg, s: "\c[i8][INVUL]\c-");
+				if(tracked_friendly[n])statemsg = strparam(s: statemsg, s: "\c[i7][FRIENDLY]\c-");
+				str killsmsg = "";
+				if(GetCVar("hpbar_rekt") == true)
+				{
+					int kills = tracked_kills[n];
+					if(kills == 1)
+					{
+						killsmsg = " \cm(1 rekt)\c-";
+					}
+					else if((kills >= 2) && (kills < 5))
+					{
+						killsmsg = strparam(s:" \cr(", d:kills, s:" rekts)\c-");
+					}
+					else if((kills >= 5) && (kills < 10))
+					{
+						killsmsg = strparam(s:" \cg(", d:kills, s:" rekts)\c-");
+					}
+					else if (kills >= 10)
+					{
+						killsmsg = strparam(s:" \c[a6](", d:kills, s:" rekts)\c-");
+					}
+				}
+				HudMessage(s: name, s: killsmsg, s: statemsg;HUDMSG_FADEOUT, 7000 + NUM_RANKINGS * 2 + rank, CR_WHITE, align_left(x + 132), y + rank * 12.0, 1.0 / 35 + 1, 0.1);
+			}
+		}
+	}
+}
+
+script "HPBar_ShowScore" (int score, int score_temp)
+{
+	if((ClassifyActor(0) & ACTOR_MONSTER) && (GetActorProperty(0, APROP_SpawnHealth) > 0))
+	{
+		str name = get_actor_name();
+		if(score_temp == 2)
+		{
+			announce(100+score_temp,"hpbar/doublekill","\c[d4]DOUBLE KILL\c-",name,"2 consecutive kills");
+		}
+		else if(score_temp == 3)
+		{
+			announce(100+score_temp,"hpbar/multikill","\c[d4]MULTI KILL\c-",name,"3 consecutive kills");
+		}
+		else if(score_temp == 4)
+		{
+			announce(100+score_temp,"hpbar/megakill","\c[d4]MEGA KILL\c-",name,"4 consecutive kills");
+		}
+		else if(score_temp == 5)
+		{
+			announce(100+score_temp,"hpbar/ultrakill","\c[d4]ULTRA KILL\c-",name,"5 consecutive kills");
+		}
+		else if(score_temp == 6)
+		{
+			announce(100+score_temp,"hpbar/monsterkill","\c[d4]M-M-MONSTER KILL!\c-",name,"6 consecutive kills");
+		}
+		else if(score_temp == 7)
+		{
+			announce(100+score_temp,"hpbar/ludicrouskill","\c[d4]L U D I C R O U S  K I L L !\c-",name,"7 consecutive kills");
+		}
+		else if((score_temp == 8) || (score_temp == 9))
+		{
+			announce(100+score_temp,"hpbar/holyshit","\c[m6]! ! ! H O L Y  S H I T ! ! !\c-",name,strparam(d:score_temp,s:" consecutive kills"));
+		}
+		else if(score_temp >= 10)
+		{
+			announce(100+score_temp,"hpbar/sexyholyshit","\c[m6]! ! ! H O L Y  S H I T ! ! !\c-",name,strparam(d:score_temp,s:" consecutive kills"));
+		}
+		// Wait until nothing is playing.
+		while(announcers_playing > 0)delay(1);
+		// Skip the announcement if the monster has gained another tier during the wait.
+		if((score == 3) && (CheckInventory("MonsterScore") < 5))
+		{
+			announce(2,"hpbar/killingspree","\c[l5]KILLING SPREE\c-",name,"3 total kills");
+		}
+		else if((score == 5) && (CheckInventory("MonsterScore") < 8))
+		{
+			announce(3,"hpbar/rampage","\c[l5]RAMPAGE\c-",name,"5 total kills");
+		}
+		else if((score == 8) && (CheckInventory("MonsterScore") < 10))
+		{
+			announce(4,"hpbar/dominating","\c[d4]DOMINATING\c-",name,"8 total kills");
+		}
+		else if((score == 10) && (CheckInventory("MonsterScore") < 15))
+		{
+			announce(5,"hpbar/unstoppable","\c[k9]UNSTOPPABLE\c-",name,"10 total kills");
+		}
+		else if((score == 15) && (CheckInventory("MonsterScore") < 25))
+		{
+			announce(6,"hpbar/godlike","\c[k9]G O D L I K E !\c-",name,"15 total kills");
+		}
+		else if(score == 25)
+		{
+			announce(7,"hpbar/wickedsick","\c[n3]W I C K E D  S I C K !\c-",name,"25 total kills");
+		}
+	}
+}
+	
+script "HPBar_Announcer" (int announcer_id_) CLIENTSIDE
+{
+    if(get_my_user_cvar("hpbar_announcer") == true)
+	{
+		if(GetCVar("hpbar_announcer_id") != announcer_id_) terminate;
+		str sound = GetCVarString("hpbar_announcer_sound");
+		str bigtext = GetCVarString("hpbar_announcer_bigtext");
+		str smalltext = GetCVarString("hpbar_announcer_smalltext");
+		str tinytext = GetCVarString("hpbar_announcer_tinytext");
+		StopSound(0,5);
+		StopSound(0,6);
+		StopSound(0,7);
+		PlaySound(0,sound,5|CHAN_NOPAUSE,1.0,false,ATTN_NONE);
+		PlaySound(0,sound,6|CHAN_NOPAUSE,1.0,false,ATTN_NONE);
+		PlaySound(0,sound,7|CHAN_NOPAUSE,1.0,false,ATTN_NONE);
+		SetHudSize(800,600,true);
+		SetFont("SMALLFONT");
+		HudMessageBold(s: smalltext; HUDMSG_FADEOUT, 7100, CR_WHITE, 400.0, 125.2, 5.0, 0.5);
+		HudMessageBold(s: tinytext; HUDMSG_FADEOUT, 7102, CR_WHITE, 400.0, 150.1, 5.0, 0.5);
+		SetHudSize(640, 480, true);
+		SetFont("BIGFONT");
+		HudMessageBold(s: bigtext; HUDMSG_FADEOUT, 7101, CR_UNTRANSLATED, 320.0, 104.1, 5.0, 0.5);
+		Log(s:smalltext, s: ": ", s:bigtext);
+	}
+}
+
+script "HPBar_AnnouncerCooldown" (void)
+{
+    delay(35 * 3);
+    announcers_playing -= 1;
+    if (announcers_playing <= 0)
+	{
+        announcer_priority = -1;
+    }
+}
