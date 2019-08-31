@@ -1,8 +1,10 @@
-Actor MonsterScore : Inventory { Inventory.MaxAmount 999 }
+Actor MonsterScore : Inventory { Inventory.MaxAmount 999 Inventory.InterHubAmount 0 }
 Actor MonsterScoreTemporary : MonsterScore {}
-Actor MonsterAlreadyTracked : Inventory { Inventory.MaxAmount 2147483647 }
+Actor MonsterAlreadyTracked : Inventory { Inventory.MaxAmount 2147483647 Inventory.InterHubAmount 0 }
 Actor hpbar-testing-puff-base
 {
+Height 4
+Radius 4
 RenderStyle None
 Decal None
 +NODECAL

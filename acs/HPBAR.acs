@@ -248,7 +248,7 @@ function str normalize_class(str class)
 	// These can't be declared as cvars due to special characters, so we special case them here:
 	int i = 0;
 	int j = 1;
-	while((streq(normalize_class_list[i][0],"endmassive") == false) && (i < NORMALIZE_CLASS_LIST_MAX))
+	while((i < NORMALIZE_CLASS_LIST_MAX) && (streq(normalize_class_list[i][0],"endmassive") == false))
 	{
 		if(streq(class,normalize_class_list[i][0]) == true)
 		{
