@@ -105,7 +105,7 @@ function int hpbar_align_right(int x)
 function void show_full_hpbar(int hp, int max_hp, int hp_percentage, str name, bool invul, bool friendly)
 {
 	SetHudSize(FULL_HUD_WIDTH, FULL_HUD_HEIGHT, true);
-	SetFont("NORMAL");
+	SetFont("SMALLFONT");
 	HudMessageBold(d: hp, s: " / ", d: max_hp, s: " (", d: hp_percentage, s: "%)";HUDMSG_FADEOUT, 6000, CR_WHITE, FULL_HPBAR_X, FULL_HPBAR_Y, FULL_HOLDTIME);
 	if (hp_percentage <= 140)
 	{
@@ -122,7 +122,7 @@ function void show_full_hpbar(int hp, int max_hp, int hp_percentage, str name, b
 	}
 	SetFont("HPBAR");
 	HudMessageBold(s: "A"; HUDMSG_FADEOUT, 6102, CR_UNTRANSLATED, FULL_HPBAR_X, FULL_HPBAR_Y, FULL_HOLDTIME);
-	SetFont("NORMAL");
+	SetFont("SMALLFONT");
 	HudMessageBold(s: name; HUDMSG_FADEOUT, 6103, CR_WHITE, FULL_HPBAR_X, FULL_NAME_Y, FULL_HOLDTIME);
 	int ln = 0;
 	if(invul)
@@ -175,7 +175,7 @@ function int GetOrSetMonsterTrackNum(void)
 function void show_minimal_hpbar(int hp_percentage)
 {
 	SetHudSize(MINIMAL_HUD_WIDTH, MINIMAL_HUD_HEIGHT, false);
-	SetFont("NORMAL");
+	SetFont("SMALLFONT");
 	HudMessageBold(s: hpp_to_color(hp_percentage), d: hp_percentage, s: "%\c-";HUDMSG_FADEOUT, 6000, CR_UNTRANSLATED, MINIMAL_HP_X, MINIMAL_HP_Y, MINIMAL_HOLDTIME, MINIMAL_FADETIME);
 }
 
