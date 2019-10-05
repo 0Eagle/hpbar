@@ -52,6 +52,10 @@ To support customized names for monsters in your mod, simply add the name to be 
 
 ## Changelogs
 
+### v22
+Востановлена совместимость с gzdoom для игры в оффлайне.
+Сделаны небольшие оптимизации в скриптах захвата цели.
+
 ### v21
 Исправлена ошибка при которой после респавна переставал работать захват цели.
 Добавлена поддержка Complex Doom v27a5.

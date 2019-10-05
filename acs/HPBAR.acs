@@ -240,7 +240,7 @@ str normalize_class_list[NORMALIZE_CLASS_LIST_MAX][2] = {
 	{"Mancubus~","Mancubus"},//16
 	{"SoulKeeper~","SoulKeeper"},//17
 	{"Defiler~","Defiler"},//18
-	{"endmassive","endmassive"}//19
+	{"BloodSkull~","BloodSkull"},//19
 };
 
 function str normalize_class(str class)
@@ -248,7 +248,7 @@ function str normalize_class(str class)
 	// These can't be declared as cvars due to special characters, so we special case them here:
 	int i = 0;
 	int j = 1;
-	while((i < NORMALIZE_CLASS_LIST_MAX) && (streq(normalize_class_list[i][0],"endmassive") == false))
+	while(i < NORMALIZE_CLASS_LIST_MAX)
 	{
 		if(streq(class,normalize_class_list[i][0]) == true)
 		{
