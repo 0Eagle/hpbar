@@ -240,7 +240,7 @@ str normalize_class_list[NORMALIZE_CLASS_LIST_MAX][2] = {
 	{"Mancubus~","Mancubus"},//16
 	{"SoulKeeper~","SoulKeeper"},//17
 	{"Defiler~","Defiler"},//18
-	{"BloodSkull~","BloodSkull"},//19
+	{"BloodSkull~","BloodSkull"}//19
 };
 
 function str normalize_class(str class)
