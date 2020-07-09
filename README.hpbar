@@ -52,6 +52,10 @@ To support customized names for monsters in your mod, simply add the name to be 
 
 ## Changelogs
 
+### v23
+Все константы сгруппированы и закреплены в #define.
+Уменьшено количество кода в декорейте.
+
 ### v22
 Востановлена совместимость с gzdoom для игры в оффлайне.
 Сделаны небольшие оптимизации в скриптах захвата цели.
