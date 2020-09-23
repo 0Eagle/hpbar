@@ -1,6 +1,7 @@
 #library "HPBAR"
 #include "zcommon.acs"
 
+#define INT_MAX							2147483647
 #define STYLE_FULL						1
 #define STYLE_MINIMAL					2
 
@@ -168,7 +169,7 @@ function int GetOrSetMonsterTrackNum(void)
 	{
 		if(tracked_tids[i] == INVALID_TID)
 		{
-			TrackNum = random(0,2147483647);
+			TrackNum = random(0,INT_MAX);
 			for(int j = 0; i < MAX_TRACKERS; ++i)
 			{
 				if(tracked_tids[j] == TrackNum)
@@ -211,92 +212,75 @@ function void announce(int priority, str sound, str bigtext, str smalltext, str 
 	}
 }
 
-function str ccunescape_impl(str s, int n)
-{
-	for (int i = n; i < strlen(s); ++i)
-	{
-		if((i < strlen(s) - 1) && (GetChar(s, i) == '\\') && (GetChar(s, i + 1) == 'c'))
-		{
-			return strparam(s:strmid(s, n, i - n), s:"\c", s:ccunescape_impl(s, i + 2));
-		}
-	}
-	return strmid(s, n, 99999);
-}
-
-function str ccunescape(str s)
-{
-	return ccunescape_impl(s, 0);
-}
-
 function bool streq(str x, str y)
 {
 	return StrICmp(x, y) == 0;
 }
 
-#define NORMALIZE_CLASS_LIST_MAX 19
-
-str normalize_class_list[NORMALIZE_CLASS_LIST_MAX][2] = {
-	//
-	{"Spectre~","Spectre"},//1
-	{"Cacodemon~","Cacodemon"},//2
-	{"StealthCacodemon~","StealthCacodemon"},//3
-	{"HellKnight~","HellKnight"},//4
-	{"StealthHellKnight~","StealthHellKnight"},//5
-	{"BaronOfHell~","BaronOfHell"},//6
-	{"Terminator~","Terminator"},//7
-	{"Hexa-ShotgunZombie","HexaShotgunZombie"},//8
-	{"LegendaryCyberNoble~","LegendaryCyberNoble"},//9
-	{"Hades-TechZombie","HadesTechZombie"},//10
-	{"ImpureElemental~","ImpureElemental"},//11
-	{"ImpureSoul~","ImpureSoul"},//12
-	{"DarkCybruiser~","DarkCybruiser"},//13
-	{"Cydestroyer~","Cydestroyer"},//14
-	{"Cybruiser~","Cybruiser"},//15
-	{"Mancubus~","Mancubus"},//16
-	{"SoulKeeper~","SoulKeeper"},//17
-	{"Defiler~","Defiler"},//18
-	{"BloodSkull~","BloodSkull"}//19
-};
-
-function str normalize_class(str class)
+//Костыль заменяющий управляющие символы на текст.
+function str ccunescape_impl(str s, int n)
 {
-	// These can't be declared as cvars due to special characters, so we special case them here:
-	int i = 0;
-	int j = 1;
-	while(i < NORMALIZE_CLASS_LIST_MAX)
+	for(int i = n; i < (strlen(s)-1); i++)
 	{
-		if(streq(class,normalize_class_list[i][0]) == true)
+		if((GetChar(s, i) == '\\') && (GetChar(s, i + 1) == 'c'))
 		{
-			return normalize_class_list[i][j];
+			return strparam(s:strmid(s,n,i-n), s:"\c", s:ccunescape_impl(s,i+2));
 		}
-		i++;
 	}
-	str s = GetCVarString(strparam(s:"hpbar_map_", s:class));
-	if (s != 0)
+    return strmid(s,n,strlen(s));
+}
+
+function str ccunescape(str s)
+{
+	return ccunescape_impl(s,0);
+}
+
+function str normalize_class_impl(str s, int n)
+{
+	for(int i = n; i < strlen(s); i++)
 	{
-		return s;
+		if(GetChar(s,i) == '~')
+		{
+			if(i < (strlen(s)-1))
+			{
+				return strparam(s:strmid(s,n,i-n), s:normalize_class_impl(s,i+1));
+			}
+			return strparam(s:strmid(s,n,i-n));
+		}
 	}
-	return class;
+    return strmid(s,n,strlen(s));
+}
+
+function str normalize_class(str s)
+{
+	//Имена не могут быть объявлены как cvars из-за специальных символов, поэтому здесь их заменяем на пробелы:
+	str nclass = normalize_class_impl(s,0);
+	str mclass = GetCVarString(strparam(s:"hpbar_map_", s:nclass));
+	if(mclass != 0)
+	{
+		return mclass;
+	}
+	return nclass;
 }
 
 function str get_actor_name(void)
 {
 	if((ClassifyActor(0) & ACTOR_PLAYER) && (!(ClassifyActor(0) & ACTOR_MONSTER)))
 	{
-		return strparam(n: 0);
+		return strparam(n:0);
 	}
 	str class = GetActorClass(0);
-	str name = GetCVarString(strparam(s: "hpbar_name_", s: class));
+	str name = GetCVarString(strparam(s:"hpbar_name_", s:class));
 	if(name != 0)
 	{
 		return ccunescape(name);
 	}
-	name = GetCVarString(strparam(s: "hpbar_name_", s: normalize_class(class)));
-	if(name != 0)
+	str mname = GetCVarString(strparam(s:"hpbar_name_", s:normalize_class(class)));
+	if(mname != 0)
 	{
-		return ccunescape(name);
+		return ccunescape(mname);
 	}
-	return ccunescape(GetActorProperty(0, APROP_NameTag));
+	return ccunescape(GetActorProperty(0,APROP_NameTag));
 }
 
 function bool should_track(void)
@@ -320,36 +304,17 @@ function bool should_track(void)
 	{
 		return false;
 	}
-	if (CheckFlag(0,"BOSS"))
+	if(CheckFlag(0,"BOSS"))
 	{
 		return true;
 	}
-	return (GetActorProperty(0, APROP_SpawnHealth) >= GetCVar("hpbar_tracker_threshold"));
+	return (GetActorProperty(0,APROP_SpawnHealth) >= GetCVar("hpbar_tracker_threshold"));
 }
 
 function bool get_actor_invul(void)
 {
 	bool invul = GetActorProperty(0,APROP_Invulnerable)|(!CheckFlag(0,"SHOOTABLE"))|(CheckFlag(0,"NODAMAGE"));
 	return invul;
-}
-
-function void common31233(int pn)
-{
-	int hp = GetActorProperty(0, APROP_Health);
-	int max_hp = GetActorProperty(0, APROP_SpawnHealth);
-	if(max_hp <= 0) max_hp = hp;
-	if((max_hp > 0) && (ClassifyActor(0) & ACTOR_ALIVE))
-	{
-		if(max_hp >= GetCVar("hpbar_threshold"))
-		{
-			SetCVarString(strparam(s:"hpbar_target_name", d:pn),get_actor_name());
-			ACS_NamedExecuteAlways("HPBar_LinebarView",0,pn,hp,max_hp);
-		}
-		if(GetCVar("hpbar_tracker") == true)
-		{
-			ACS_NamedExecuteAlways("HPBar_TrackerView",0,0);
-		}
-	}
 }
 
 function void request_broadcast_tracker_info(void)
@@ -401,179 +366,19 @@ script "Copy_Invul_Reflect_Friendly_to_Clientside" (int i, int invul, int reflec
 	tracked_friendly[i] = friendly;
 }
 //==============================================================================
+//Очистка списков на срвере
 script "HPBar_Open" OPEN
 {
 	clear_tracklist_tid();
 	clear_tracklist_name();
 }
 
-script "HPBar_Enter" ENTER
-{
-	delay(1);
-	ACS_NamedExecuteAlways("HPBar_HitTarget",0);
-}
-
-script "HPBar_Respawn" RESPAWN
-{
-	delay(1);
-	ACS_NamedExecuteAlways("HPBar_HitTarget",0);
-}
-
-script "HPBar_HitTarget" (void)
-{
-	int pn = PlayerNumber();
-	if(GetCVar("hpbar_rekt") == true)SetThingSpecial(0,ACS_NamedExecuteAlways,"HPBar_Rect",0,pn);
-	while(ClassifyActor(0) & ACTOR_ALIVE)
-	{
-		if(ClassifyActor(0) & ACTOR_ALIVE)LineAttack(0,GetActorAngle(0),GetActorPitch(0),0,"hpbar-testing-puff","None",8192.0,FHF_NORANDOMPUFFZ|FHF_NOIMPACTDECAL,0);
-		delay(1);
-		if(ClassifyActor(0) & ACTOR_ALIVE)LineAttack(0,GetActorAngle(0),GetActorPitch(0),0,"hpbar-testing-thru-puff","None",8192.0,FHF_NORANDOMPUFFZ|FHF_NOIMPACTDECAL,0);
-		delay(1);
-	}
-}
-
-script "HPBar_GetTarget" (void)
-{
-	int PuffTID = UniqueTID(0,0);
-	Thing_ChangeTID(0,PuffTID);
-	if(SetActivator(0,AAPTR_TARGET) == 1)
-	{
-		int pn = PlayerNumber();
-		if((pn >= 0) && (SetActivator(PuffTID) == 1) && (SetActivator(0,AAPTR_TRACER) == 1))
-		{
-			common31233(pn);
-		}
-	}
-}
-
-script "HPBar_Rect" (int pn)//Скрипт выполняется от имени убившего игрока монстра или от имени самого игрока при самоубийстве.
-{
-	if(GetCVar("hpbar_tracker") == true)ACS_NamedExecuteAlways("HPBar_TrackerView",0,1);
-	GiveInventory("MonsterScore",1); // Total score
-	GiveInventory("MonsterScoreTemporary",1); // Temporary score
-	int score = CheckInventory("MonsterScore");
-	int score_temp = CheckInventory("MonsterScoreTemporary");
-	ACS_NamedExecuteAlways("HPBar_ShowScore",0,score,score_temp);
-	if(!firstblood)
-	{
-		if((PlayerNumber() == pn) || (ClassifyActor(0) & ACTOR_WORLD))
-		{
-			int gender = GetPlayerInfo(pn, PLAYERINFO_GENDER);
-			str killstr = "";
-			if (gender == 0) killstr = "Killed himself";
-			else if (gender == 1) killstr = "Killed herself";
-			else killstr = "Killed itself";
-			announce(1,"hpbar/firstblood","\c[d4]FIRST DUMB\c-",strparam(n:pn+1),killstr);
-		}
-		else
-		{
-			announce(1,"hpbar/firstblood","\c[d4]FIRST BLOOD\c-",get_actor_name(),"First kill on the map");
-		}
-		firstblood = true;
-	}
-	// Wait for 5 seconds. If the monster didn't score other kills in the mean time, reset its temporary score.
-	delay(35 * 5);
-	if (CheckInventory("MonsterScoreTemporary") == score_temp)
-	{
-		TakeInventory("MonsterScoreTemporary", score_temp);
-	}
-}
-
-script "HPBar_LinebarView" (int player, int hp, int max_hp) CLIENTSIDE
-{
-	if(ConsolePlayerNumber() == player)
-	{
-		int hp_percentage = 0;
-		if(max_hp != 0)
-		{
-			hp_percentage = hp * 100 / max_hp;
-		}
-		str name = GetCVarString(strparam(s:"hpbar_target_name", d:ConsolePlayerNumber()));
-		bool invul = get_actor_invul();
-		bool friendly = GetActorProperty(0, APROP_Friendly);
-		if(!friendly || get_my_user_cvar("hpbar_show_friendly"))
-		{
-			int style = get_my_user_cvar("hpbar_style");
-			if(style == STYLE_FULL)
-			{
-				show_full_hpbar(hp, max_hp, hp_percentage, name, invul, friendly);
-			}
-			else if(style == STYLE_MINIMAL)
-			{
-				show_minimal_hpbar(hp_percentage);
-			}
-		}
-	}
-}
-
-script "HPBar_TrackerView" (int force_track)//Отслеживание монстра попавшего в прицел, цикл проверки работает пока он жив.
-{
-	// We only track monsters. :)
-	if((ClassifyActor(0) & ACTOR_MONSTER) && (GetActorProperty(0, APROP_SpawnHealth) > 0) && (CheckInventory("MonsterAlreadyTracked") < 1))
-	{
-		// Should we track it?
-		if((force_track == 1) || (should_track() == true))
-		{
-			// Найти пустой слот и получить трек номер.
-			int i = GetOrSetMonsterTrackNum();
-			if(i == INVALID_TID)//Если не нашлось места в списке - остановить скрипт.
-			{
-				TakeInventory("MonsterAlreadyTracked",2147483647);
-				terminate;
-			}
-			GiveInventory("MonsterAlreadyTracked",tracked_tids[i]);//Выдать трекномер монстру для отслеживания повторов.
-			ACS_NamedExecuteWithResult("Copy_tracked_tids_to_Clientside",i,tracked_tids[i]);
-			tracked_max_hps[i] = GetActorProperty(0, APROP_SpawnHealth);
-			str name_cvar = strparam(s:"hpbar_tracked_names", d:i);
-			// Keep updating clients the HP and name of the monster while it is alive.
-			while((ClassifyActor(0) & ACTOR_ALIVE) && (CheckInventory("MonsterAlreadyTracked") == tracked_tids[i]))
-			{
-				if(tracked_broadcast[i] == true)
-				{
-					ACS_NamedExecuteWithResult("Copy_tracked_tids_to_Clientside",i,tracked_tids[i]);
-				}
-				// Send monster HP
-				int old_hp = tracked_hps[i];
-				int old_kills = tracked_kills[i];
-				tracked_hps[i] = GetActorProperty(0, APROP_Health);
-				tracked_kills[i] = CheckInventory("MonsterScore");
-				if((old_hp != tracked_hps[i]) || (old_kills != tracked_kills[i]) || (tracked_broadcast[i] == true))
-				{
-					ACS_NamedExecuteWithResult("Copy_HP_and_Kills_to_Clientside",i,tracked_hps[i],tracked_kills[i]);
-				}
-				// Send monster invul, reflect, friendly
-				bool old_invul = tracked_invul[i];
-				tracked_invul[i] = get_actor_invul();
-				bool old_reflect = tracked_reflect[i];
-				tracked_reflect[i] = CheckFlag(0,"REFLECTIVE");
-				bool old_friendly = tracked_friendly[i];
-				tracked_friendly[i] = GetActorProperty(0, APROP_Friendly);
-				if((old_invul != tracked_invul[i]) || (old_reflect != tracked_reflect[i]) || (old_friendly != tracked_friendly[i]) || (tracked_broadcast[i] == true))
-				{
-					ACS_NamedExecuteWithResult("Copy_Invul_Reflect_Friendly_to_Clientside",i,tracked_invul[i],tracked_reflect[i],tracked_friendly[i]);
-				}
-				// Send name of monster
-				str old_name = GetCVarString(name_cvar);
-				str name = get_actor_name();
-				if((old_name == 0) || (!streq(old_name, name)) || (tracked_broadcast[i] == true))
-				{
-					tracked_broadcast[i] = false;
-					SetCVarString(name_cvar, name);
-				}
-				delay(1);
-			}
-			// The monster is dead, remove it from the slot and tell clients to stop tracking it.
-			tracked_tids[i] = INVALID_TID;
-			TakeInventory("MonsterAlreadyTracked",2147483647);
-			SetCVarString(strparam(s:"hpbar_tracked_names", d:i),"");
-			ACS_NamedExecuteWithResult("Copy_tracked_tids_to_Clientside",i,INVALID_TID);
-		}
-	}
-}
-
+//Запуск трекера на клиенте.
 script "HPBar_Open-cs" OPEN CLIENTSIDE
 {
+	//Очистка списков на клиенте
 	clear_tracklist_tid();
+	//запрос обновления списков с сервера.
 	request_broadcast_tracker_info();
 	delay(1);
 	SetHudSize(TRACKER_HUD_WIDTH, TRACKER_HUD_HEIGHT, false);
@@ -618,39 +423,214 @@ script "HPBar_Open-cs" OPEN CLIENTSIDE
 				int hpp = 0;
 				if(max_hp != 0)
 				{
-					hpp = hp * 100 / max_hp;
+					hpp = (hp*100)/max_hp;
 				}
 				str name = GetCVarString(strparam(s:"hpbar_tracked_names", d:n));
-				HudMessage(s: hpp_to_color(hpp), d: hp, s: "/", d: max_hp, s: "\c-";HUDMSG_FADEOUT, HUD_TEXT_TRACKER_NAME_ID + rank, CR_WHITE, hpbar_align_right(x + 80), y + rank * 12.0, MINIMAL_HOLDTIME, MINIMAL_FADETIME);
-				HudMessage(s: hpp_to_color(hpp), d: hpp, s: "%\c-";HUDMSG_FADEOUT, HUD_TEXT_TRACKER_NAME_ID + NUM_RANKINGS + rank, CR_WHITE, hpbar_align_right(x + 120), y + rank * 12.0, MINIMAL_HOLDTIME, MINIMAL_FADETIME);
+				HudMessage(s:hpp_to_color(hpp), d:hp, s:"/", d: max_hp, s: "\c-";HUDMSG_FADEOUT, HUD_TEXT_TRACKER_NAME_ID + rank, CR_WHITE, hpbar_align_right(x + 80), y + rank * 12.0, MINIMAL_HOLDTIME, MINIMAL_FADETIME);
+				HudMessage(s:hpp_to_color(hpp), d:hpp, s:"%\c-";HUDMSG_FADEOUT, HUD_TEXT_TRACKER_NAME_ID + NUM_RANKINGS + rank, CR_WHITE, hpbar_align_right(x + 120), y + rank * 12.0, MINIMAL_HOLDTIME, MINIMAL_FADETIME);
 				str statemsg = " ";
-				if(tracked_reflect[n])statemsg = strparam(s: statemsg, s: "\c[x5][REFLECT]\c-");
-				if(tracked_invul[n])statemsg = strparam(s: statemsg, s: "\c[i8][INVUL]\c-");
-				if(tracked_friendly[n])statemsg = strparam(s: statemsg, s: "\c[i7][FRIENDLY]\c-");
+				if(tracked_reflect[n])statemsg = strparam(s:statemsg, s:"\c[x5][REFLECT]\c-");
+				if(tracked_invul[n])statemsg = strparam(s:statemsg, s:"\c[i8][INVUL]\c-");
+				if(tracked_friendly[n])statemsg = strparam(s:statemsg, s:"\c[i7][FRIENDLY]\c-");
 				str killsmsg = "";
 				if(GetCVar("hpbar_rekt") == true)
 				{
 					int kills = tracked_kills[n];
-					if(kills == 1)
-					{
-						killsmsg = " \cm(1 rekt)\c-";
-					}
-					else if((kills >= 2) && (kills < 5))
-					{
-						killsmsg = strparam(s:" \cr(", d:kills, s:" rekts)\c-");
-					}
-					else if((kills >= 5) && (kills < 10))
-					{
-						killsmsg = strparam(s:" \cg(", d:kills, s:" rekts)\c-");
-					}
-					else if (kills >= 10)
+					if(kills >= 10)
 					{
 						killsmsg = strparam(s:" \c[a6](", d:kills, s:" rekts)\c-");
 					}
+					else if(kills >= 5)
+					{
+						killsmsg = strparam(s:" \cg(", d:kills, s:" rekts)\c-");
+					}
+					else if(kills >= 2)
+					{
+						killsmsg = strparam(s:" \cr(", d:kills, s:" rekts)\c-");
+					}
+					else if(kills >= 1)
+					{
+						killsmsg = " \cm(1 rekt)\c-";
+					}
 				}
-				HudMessage(s: name, s: killsmsg, s: statemsg;HUDMSG_FADEOUT, HUD_TEXT_TRACKER_NAME_ID + NUM_RANKINGS * 2 + rank, CR_WHITE, hpbar_align_left(x + 132), y + rank * 12.0, MINIMAL_HOLDTIME, MINIMAL_FADETIME);
+				HudMessage(s:name, s:killsmsg, s:statemsg;HUDMSG_FADEOUT, HUD_TEXT_TRACKER_NAME_ID + NUM_RANKINGS * 2 + rank, CR_WHITE, hpbar_align_left(x + 132), y + rank * 12.0, MINIMAL_HOLDTIME, MINIMAL_FADETIME);
 			}
 		}
+	}
+}
+
+script "HPBar_Enter" ENTER
+{
+	delay(1);
+	ACS_NamedExecuteAlways("HPBar_HitTarget",0);
+}
+
+script "HPBar_Respawn" RESPAWN
+{
+	delay(1);
+	ACS_NamedExecuteAlways("HPBar_HitTarget",0);
+}
+
+script "HPBar_HitTarget" (void)
+{
+	if(GetCVar("hpbar_rekt") == true)SetThingSpecial(0,ACS_NamedExecuteAlways,"HPBar_Rect",0,PlayerNumber());
+	while(ClassifyActor(0) & ACTOR_ALIVE)
+	{
+		if(ClassifyActor(0) & ACTOR_ALIVE)LineAttack(0,GetActorAngle(0),GetActorPitch(0),0,"hpbar-testing-puff","None",8192.0,FHF_NORANDOMPUFFZ|FHF_NOIMPACTDECAL,0);
+		delay(1);
+		if(ClassifyActor(0) & ACTOR_ALIVE)LineAttack(0,GetActorAngle(0),GetActorPitch(0),0,"hpbar-testing-thru-puff","None",8192.0,FHF_NORANDOMPUFFZ|FHF_NOIMPACTDECAL,0);
+		delay(1);
+	}
+}
+
+script "HPBar_GetTarget" (void)
+{
+	int PuffTID = UniqueTID(0,0);
+	Thing_ChangeTID(0,PuffTID);
+	if(SetActivator(0,AAPTR_TARGET) == 1)
+	{
+		int p_num = PlayerNumber();
+		if((PlayerNumber() >= 0) && (SetActivator(PuffTID) == 1) && (SetActivator(0,AAPTR_TRACER) == 1) && (ClassifyActor(0) & ACTOR_ALIVE))
+		{
+			int hp = GetActorProperty(0,APROP_Health);
+			int max_hp = GetActorProperty(0,APROP_SpawnHealth);
+			if(max_hp <= 0)max_hp = hp;
+			if(max_hp > 0)
+			{
+				if(max_hp >= GetCVar("hpbar_threshold"))
+				{
+					ACS_NamedExecuteAlways("HPBar_LinebarView",0,p_num,hp,max_hp);
+				}
+				if(GetCVar("hpbar_tracker") == true)
+				{
+					ACS_NamedExecuteAlways("HPBar_TrackerView",0,0);
+				}
+			}
+		}
+	}
+}
+
+//Скрипт выпоняется от имени цели (монстра).
+script "HPBar_LinebarView" (int p_num, int hp, int max_hp) CLIENTSIDE
+{
+	if(ConsolePlayerNumber() == p_num)
+	{
+		int hp_percentage = 0;
+		if(max_hp != 0)
+		{
+			hp_percentage = (hp*100)/max_hp;
+		}
+		bool invul = get_actor_invul();
+		bool friendly = GetActorProperty(0,APROP_Friendly);
+		if(!friendly || get_my_user_cvar("hpbar_show_friendly"))
+		{
+			int style = get_my_user_cvar("hpbar_style");
+			if(style == STYLE_FULL)
+			{
+				show_full_hpbar(hp, max_hp, hp_percentage, get_actor_name(), invul, friendly);
+			}
+			else if(style == STYLE_MINIMAL)
+			{
+				show_minimal_hpbar(hp_percentage);
+			}
+		}
+	}
+}
+
+//Отслеживание монстра попавшего в прицел, цикл проверки работает пока он жив.
+script "HPBar_TrackerView" (int force_track)
+{
+	// We only track monsters. :)
+	if((ClassifyActor(0) & ACTOR_MONSTER) && (GetActorProperty(0, APROP_SpawnHealth) > 0) && (CheckInventory("MonsterAlreadyTracked") < 1))
+	{
+		// Should we track it?
+		if((force_track == 1) || (should_track() == true))
+		{
+			// Найти пустой слот и получить трек номер.
+			int i = GetOrSetMonsterTrackNum();
+			if(i != INVALID_TID)//Если не нашлось места в списке - остановить скрипт.
+			{
+				GiveInventory("MonsterAlreadyTracked",tracked_tids[i]);//Выдать трекномер монстру для отслеживания повторов.
+				ACS_NamedExecuteWithResult("Copy_tracked_tids_to_Clientside",i,tracked_tids[i]);
+				tracked_max_hps[i] = GetActorProperty(0, APROP_SpawnHealth);
+				str name_cvar = strparam(s:"hpbar_tracked_names", d:i);
+				// Keep updating clients the HP and name of the monster while it is alive.
+				while((ClassifyActor(0) & ACTOR_ALIVE) && (CheckInventory("MonsterAlreadyTracked") == tracked_tids[i]))
+				{
+					if(tracked_broadcast[i] == true)
+					{
+						ACS_NamedExecuteWithResult("Copy_tracked_tids_to_Clientside",i,tracked_tids[i]);
+					}
+					// Send monster HP
+					int old_hp = tracked_hps[i];
+					int old_kills = tracked_kills[i];
+					tracked_hps[i] = GetActorProperty(0, APROP_Health);
+					tracked_kills[i] = CheckInventory("MonsterScore");
+					if((old_hp != tracked_hps[i]) || (old_kills != tracked_kills[i]) || (tracked_broadcast[i] == true))
+					{
+						ACS_NamedExecuteWithResult("Copy_HP_and_Kills_to_Clientside",i,tracked_hps[i],tracked_kills[i]);
+					}
+					// Send monster invul, reflect, friendly
+					bool old_invul = tracked_invul[i];
+					tracked_invul[i] = get_actor_invul();
+					bool old_reflect = tracked_reflect[i];
+					tracked_reflect[i] = CheckFlag(0,"REFLECTIVE");
+					bool old_friendly = tracked_friendly[i];
+					tracked_friendly[i] = GetActorProperty(0, APROP_Friendly);
+					if((old_invul != tracked_invul[i]) || (old_reflect != tracked_reflect[i]) || (old_friendly != tracked_friendly[i]) || (tracked_broadcast[i] == true))
+					{
+						ACS_NamedExecuteWithResult("Copy_Invul_Reflect_Friendly_to_Clientside",i,tracked_invul[i],tracked_reflect[i],tracked_friendly[i]);
+					}
+					// Send name of monster
+					str old_name = GetCVarString(name_cvar);
+					str name = get_actor_name();
+					if((old_name == 0) || (!streq(old_name, name)) || (tracked_broadcast[i] == true))
+					{
+						tracked_broadcast[i] = false;
+						SetCVarString(name_cvar, name);
+					}
+					delay(1);
+				}
+				// The monster is dead, remove it from the slot and tell clients to stop tracking it.
+				tracked_tids[i] = INVALID_TID;
+				SetCVarString(strparam(s:"hpbar_tracked_names", d:i),"");
+				ACS_NamedExecuteWithResult("Copy_tracked_tids_to_Clientside",i,INVALID_TID);
+			}
+			TakeInventory("MonsterAlreadyTracked",INT_MAX);
+		}
+	}
+}
+
+script "HPBar_Rect" (int p_num)//Скрипт выполняется от имени убившего игрока монстра или от имени самого игрока при самоубийстве.
+{
+	if(GetCVar("hpbar_tracker") == true)ACS_NamedExecuteAlways("HPBar_TrackerView",0,1);
+	GiveInventory("MonsterScore",1); // Total score
+	GiveInventory("MonsterScoreTemporary",1); // Temporary score
+	int score = CheckInventory("MonsterScore");
+	int score_temp = CheckInventory("MonsterScoreTemporary");
+	ACS_NamedExecuteAlways("HPBar_ShowScore",0,score,score_temp);
+	if(!firstblood)
+	{
+		if((PlayerNumber() == p_num) || (ClassifyActor(0) & ACTOR_WORLD))
+		{
+			int gender = GetPlayerInfo(p_num,PLAYERINFO_GENDER);
+			str killstr = "";
+			if (gender == 0) killstr = "Killed himself";
+			else if (gender == 1) killstr = "Killed herself";
+			else killstr = "Killed itself";
+			announce(1,"hpbar/firstblood","\c[d4]FIRST DUMB\c-",strparam(n:p_num+1),killstr);
+		}
+		else
+		{
+			announce(1,"hpbar/firstblood","\c[d4]FIRST BLOOD\c-",get_actor_name(),"First kill on the map");
+		}
+		firstblood = true;
+	}
+	// Wait for 5 seconds. If the monster didn't score other kills in the mean time, reset its temporary score.
+	delay(35 * 5);
+	if (CheckInventory("MonsterScoreTemporary") == score_temp)
+	{
+		TakeInventory("MonsterScoreTemporary", score_temp);
 	}
 }
 

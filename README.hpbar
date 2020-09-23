@@ -52,6 +52,11 @@ To support customized names for monsters in your mod, simply add the name to be 
 
 ## Changelogs
 
+### v24
+Удалены лишние функции в acs.
+Удалены лишние cvar.
+Унифицирована проверка имен для повышения совместимости с модами.
+
 ### v23
 Все константы сгруппированы и закреплены в #define.
 Уменьшено количество кода в декорейте.
