@@ -118,6 +118,14 @@ function int hpbar_align_right(int x)
 	return to_fixed(x) - 0.2;
 }
 
+
+function int HPBarSetTid(void)
+{
+	int tid = UniqueTID(0,0);
+	Thing_ChangeTID(0,tid);
+	return tid;
+}
+
 function void show_full_hpbar(int hp, int max_hp, int hp_percentage, str name, bool invul, bool friendly)
 {
 	SetHudSize(FULL_HUD_WIDTH, FULL_HUD_HEIGHT, true);
@@ -227,7 +235,7 @@ function str ccunescape_impl(str s, int n)
 			return strparam(s:strmid(s,n,i-n), s:"\c", s:ccunescape_impl(s,i+2));
 		}
 	}
-    return strmid(s,n,strlen(s));
+	return strmid(s,n,strlen(s));
 }
 
 function str ccunescape(str s)
@@ -235,6 +243,7 @@ function str ccunescape(str s)
 	return ccunescape_impl(s,0);
 }
 
+//Имена не могут быть объявлены как cvars из-за специальных символов, поэтому уладяем эти символы.
 function str normalize_class_impl(str s, int n)
 {
 	for(int i = n; i < strlen(s); i++)
@@ -248,12 +257,11 @@ function str normalize_class_impl(str s, int n)
 			return strparam(s:strmid(s,n,i-n));
 		}
 	}
-    return strmid(s,n,strlen(s));
+	return strmid(s,n,strlen(s));
 }
 
 function str normalize_class(str s)
 {
-	//Имена не могут быть объявлены как cvars из-за специальных символов, поэтому здесь их заменяем на пробелы:
 	str nclass = normalize_class_impl(s,0);
 	str mclass = GetCVarString(strparam(s:"hpbar_map_", s:nclass));
 	if(mclass != 0)
@@ -485,8 +493,7 @@ script "HPBar_HitTarget" (void)
 
 script "HPBar_GetTarget" (void)
 {
-	int PuffTID = UniqueTID(0,0);
-	Thing_ChangeTID(0,PuffTID);
+	int PuffTID = HPBarSetTid();
 	if(SetActivator(0,AAPTR_TARGET) == 1)
 	{
 		int p_num = PlayerNumber();
