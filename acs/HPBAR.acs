@@ -496,7 +496,7 @@ script "HPBar_GetTarget" (void)
 	if(SetActivator(0,AAPTR_TARGET) == 1)
 	{
 		int p_num = PlayerNumber();
-		if((p_num >= 0) && (SetActivator(PuffTID) == 1) && (SetActivator(0,AAPTR_TRACER) == 1) && (ClassifyActor(0) & ACTOR_ALIVE))
+		if((p_num >= 0) && (SetActivator(PuffTID,AAPTR_TRACER) == 1) && (ClassifyActor(0) & ACTOR_ALIVE))
 		{
 			int hp = GetActorProperty(0,APROP_Health);
 			int max_hp = GetActorProperty(0,APROP_SpawnHealth);
