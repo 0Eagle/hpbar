@@ -62,9 +62,40 @@ function int to_fixed(int x)
 	return (x << 16);
 }
 
-function int to_int(int x)
+function int to_int(int num)
 {
-	return (x >> 16);
+	if(num < 0)return (num / 65536);
+	return (num >> 16);
+}
+
+function bool ActorIsPlayer(int tid)
+{
+	return ((ClassifyActor(tid) & ACTOR_PLAYER) == ACTOR_PLAYER) && ((ClassifyActor(tid) & ACTOR_MONSTER) != ACTOR_MONSTER);
+}
+
+function bool ActorIsMonster(int tid)
+{
+	return ((ClassifyActor(tid) & ACTOR_PLAYER) != ACTOR_PLAYER) && ((ClassifyActor(tid) & ACTOR_MONSTER) == ACTOR_MONSTER);
+}
+
+function bool ActorIsAlive(int tid)
+{
+	return ((ClassifyActor(tid) & ACTOR_ALIVE) == ACTOR_ALIVE);
+}
+
+function int abs(int x)
+{
+	if(x < 0)return -x;
+	return x;
+}
+
+function int percent(int current, int maximum, int maxpercent, bool overflow)
+{
+	int percentage = 0;
+	if((INT_MAX/maxpercent) < current)return maxpercent;
+	if(maximum > 0)percentage = abs((current*maxpercent)/maximum);
+	if((overflow == false) && (percentage > maxpercent))return maxpercent;
+	return percentage;
 }
 
 function int get_my_user_cvar(str cvar)
@@ -272,7 +303,7 @@ function str normalize_class(str s)
 
 function str get_actor_name(void)
 {
-	if((ClassifyActor(0) & ACTOR_PLAYER) && (!(ClassifyActor(0) & ACTOR_MONSTER)))
+	if(ActorIsPlayer(0))
 	{
 		return strparam(n:0);
 	}
@@ -320,8 +351,7 @@ function bool should_track(void)
 
 function bool get_actor_invul(void)
 {
-	bool invul = GetActorProperty(0,APROP_Invulnerable)|(!CheckFlag(0,"SHOOTABLE"))|(CheckFlag(0,"NODAMAGE"));
-	return invul;
+	return (GetActorProperty(0,APROP_Invulnerable) || (!CheckFlag(0,"SHOOTABLE")) || CheckFlag(0,"NODAMAGE"));
 }
 
 function void request_broadcast_tracker_info(void)
@@ -348,7 +378,7 @@ script "Copy_tracked_tids_to_Clientside" (int i, int tid) CLIENTSIDE
 	}
 	else
 	{
-		if(ClassifyActor(0) & ACTOR_ALIVE)
+		if(ActorIsAlive(0))
 		{
 			tracked_tids[i] = tid;
 			tracked_max_hps[i] = GetActorProperty(0,APROP_SpawnHealth);
@@ -481,11 +511,11 @@ script "HPBar_Respawn" RESPAWN
 script "HPBar_HitTarget" (void)
 {
 	if(GetCVar("hpbar_rekt") == true)SetThingSpecial(0,ACS_NamedExecuteAlways,"HPBar_Rect",0,PlayerNumber());
-	while(ClassifyActor(0) & ACTOR_ALIVE)
+	while(ActorIsAlive(0))
 	{
-		if(ClassifyActor(0) & ACTOR_ALIVE)LineAttack(0,GetActorAngle(0),GetActorPitch(0),0,"hpbar-testing-puff","None",8192.0,FHF_NORANDOMPUFFZ|FHF_NOIMPACTDECAL,0);
+		if(ActorIsAlive(0))LineAttack(0,GetActorAngle(0),GetActorPitch(0),0,"hpbar-testing-puff","None",8192.0,FHF_NORANDOMPUFFZ|FHF_NOIMPACTDECAL,0);
 		delay(1);
-		if(ClassifyActor(0) & ACTOR_ALIVE)LineAttack(0,GetActorAngle(0),GetActorPitch(0),0,"hpbar-testing-thru-puff","None",8192.0,FHF_NORANDOMPUFFZ|FHF_NOIMPACTDECAL,0);
+		if(ActorIsAlive(0))LineAttack(0,GetActorAngle(0),GetActorPitch(0),0,"hpbar-testing-thru-puff","None",8192.0,FHF_NORANDOMPUFFZ|FHF_NOIMPACTDECAL,0);
 		delay(1);
 	}
 }
@@ -496,7 +526,7 @@ script "HPBar_GetTarget" (void)
 	if(SetActivator(0,AAPTR_TARGET) == 1)
 	{
 		int p_num = PlayerNumber();
-		if((p_num >= 0) && (SetActivator(PuffTID,AAPTR_TRACER) == 1) && (ClassifyActor(0) & ACTOR_ALIVE))
+		if((p_num >= 0) && (SetActivator(PuffTID,AAPTR_TRACER) == 1) && ActorIsAlive(0))
 		{
 			int hp = GetActorProperty(0,APROP_Health);
 			int max_hp = GetActorProperty(0,APROP_SpawnHealth);
@@ -521,11 +551,7 @@ script "HPBar_LinebarView" (int p_num, int hp, int max_hp) CLIENTSIDE
 {
 	if(ConsolePlayerNumber() == p_num)
 	{
-		int hp_percentage = 0;
-		if(max_hp != 0)
-		{
-			hp_percentage = (hp*100)/max_hp;
-		}
+		int hp_percentage = percent(hp,max_hp,100,true);
 		bool invul = get_actor_invul();
 		bool friendly = GetActorProperty(0,APROP_Friendly);
 		if(!friendly || get_my_user_cvar("hpbar_show_friendly"))
@@ -547,7 +573,7 @@ script "HPBar_LinebarView" (int p_num, int hp, int max_hp) CLIENTSIDE
 script "HPBar_TrackerView" (int force_track)
 {
 	// We only track monsters. :)
-	if((ClassifyActor(0) & ACTOR_MONSTER) && (GetActorProperty(0, APROP_SpawnHealth) > 0) && (CheckInventory("MonsterAlreadyTracked") < 1))
+	if(ActorIsMonster(0) && (GetActorProperty(0, APROP_SpawnHealth) > 0) && (CheckInventory("MonsterAlreadyTracked") < 1))
 	{
 		// Should we track it?
 		if((force_track == 1) || (should_track() == true))
@@ -561,7 +587,7 @@ script "HPBar_TrackerView" (int force_track)
 				tracked_max_hps[i] = GetActorProperty(0, APROP_SpawnHealth);
 				str name_cvar = strparam(s:"hpbar_tracked_names", d:i);
 				// Keep updating clients the HP and name of the monster while it is alive.
-				while((ClassifyActor(0) & ACTOR_ALIVE) && (CheckInventory("MonsterAlreadyTracked") == tracked_tids[i]))
+				while(ActorIsAlive(0) && (CheckInventory("MonsterAlreadyTracked") == tracked_tids[i]))
 				{
 					if(tracked_broadcast[i] == true)
 					{
@@ -618,7 +644,7 @@ script "HPBar_Rect" (int p_num)
 	ACS_NamedExecuteAlways("HPBar_ShowScore",0,score,score_temp);
 	if(!firstblood)
 	{
-		if((PlayerNumber() == p_num) || (ClassifyActor(0) & ACTOR_WORLD))
+		if((PlayerNumber() == p_num) || ((ClassifyActor(0) & ACTOR_WORLD) == ACTOR_WORLD))
 		{
 			int gender = GetPlayerInfo(p_num,PLAYERINFO_GENDER);
 			str killstr = "";
@@ -643,7 +669,7 @@ script "HPBar_Rect" (int p_num)
 
 script "HPBar_ShowScore" (int score, int score_temp)
 {
-	if((ClassifyActor(0) & ACTOR_MONSTER) && (GetActorProperty(0, APROP_SpawnHealth) > 0))
+	if(ActorIsMonster(0) && (GetActorProperty(0,APROP_SpawnHealth) > 0))
 	{
 		str name = get_actor_name();
 		if(score_temp == 2)
