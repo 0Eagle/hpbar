@@ -70,12 +70,12 @@ function int to_int(int num)
 
 function bool ActorIsPlayer(int tid)
 {
-	return ((ClassifyActor(tid) & ACTOR_PLAYER) == ACTOR_PLAYER) && ((ClassifyActor(tid) & ACTOR_MONSTER) != ACTOR_MONSTER);
+	return ((ClassifyActor(tid) & ACTOR_PLAYER) == ACTOR_PLAYER);
 }
 
 function bool ActorIsMonster(int tid)
 {
-	return ((ClassifyActor(tid) & ACTOR_PLAYER) != ACTOR_PLAYER) && ((ClassifyActor(tid) & ACTOR_MONSTER) == ACTOR_MONSTER);
+	return ((ClassifyActor(tid) & ACTOR_MONSTER) == ACTOR_MONSTER);
 }
 
 function bool ActorIsAlive(int tid)
@@ -91,9 +91,9 @@ function int abs(int x)
 
 function int percent(int current, int maximum, int maxpercent, bool overflow)
 {
-	int percentage = 0;
+	if((current <= 0) || (maximum <= 0) || (maxpercent <= 0))return 0;
 	if((INT_MAX/maxpercent) < current)return maxpercent;
-	if(maximum > 0)percentage = abs((current*maxpercent)/maximum);
+	int percentage = (current*maxpercent)/maximum;
 	if((overflow == false) && (percentage > maxpercent))return maxpercent;
 	return percentage;
 }
