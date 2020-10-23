@@ -32,6 +32,8 @@
 
 #define INVALID_TID						(-129)
 
+//Шрифт по умолчанию
+#define DEFAULT_FONT					"SMALLFONT"
 //Text ID
 #define HUD_TEXT_PERCENT_ID				6000
 #define HUD_LINE_PERCENT_ID				6001
@@ -159,7 +161,7 @@ function int HPBarSetTid(void)
 function void show_full_hpbar(int hp, int max_hp, int hp_percentage, str name, bool invul, bool friendly)
 {
 	SetHudSize(FULL_HUD_WIDTH, FULL_HUD_HEIGHT, true);
-	SetFont("SMALLFONT");
+	SetFont(DEFAULT_FONT);
 	HudMessageBold(d:hp, s:" / ", d:max_hp, s:" (", d:hp_percentage, s:"%)";HUDMSG_FADEOUT, HUD_TEXT_PERCENT_ID, CR_WHITE, FULL_HPBAR_X, FULL_HPBAR_Y, FULL_HOLDTIME, FULL_FADETIME);
 	if (hp_percentage <= 140)
 	{
@@ -176,7 +178,7 @@ function void show_full_hpbar(int hp, int max_hp, int hp_percentage, str name, b
 	}
 	SetFont("HPBAR");
 	HudMessageBold(s:"A"; HUDMSG_FADEOUT, HUD_LINE_BAR_ID, CR_UNTRANSLATED, FULL_HPBAR_X, FULL_HPBAR_Y, FULL_HOLDTIME, FULL_FADETIME);
-	SetFont("SMALLFONT");
+	SetFont(DEFAULT_FONT);
 	HudMessageBold(s:name; HUDMSG_FADEOUT, HUD_TEXT_TARGET_NAME_ID, CR_WHITE, FULL_HPBAR_X, FULL_NAME_Y, FULL_HOLDTIME, FULL_FADETIME);
 	int ln = 0;
 	if(invul)
@@ -229,7 +231,7 @@ function int GetOrSetMonsterTrackNum(void)
 function void show_minimal_hpbar(int hp_percentage)
 {
 	SetHudSize(MINIMAL_HUD_WIDTH, MINIMAL_HUD_HEIGHT, false);
-	SetFont("SMALLFONT");
+	SetFont(DEFAULT_FONT);
 	HudMessageBold(s:hpp_to_color(hp_percentage), d:hp_percentage, s:"%\c-";HUDMSG_FADEOUT, HUD_TEXT_PERCENT_ID, CR_UNTRANSLATED, MINIMAL_HP_X, MINIMAL_HP_Y, MINIMAL_HOLDTIME, MINIMAL_FADETIME);
 }
 
@@ -457,11 +459,7 @@ script "HPBar_Open-cs" OPEN CLIENTSIDE
 				if(n == -1)break;
 				hp = tracked_hps[n];
 				max_hp = tracked_max_hps[n];
-				int hpp = 0;
-				if(max_hp != 0)
-				{
-					hpp = (hp*100)/max_hp;
-				}
+				int hpp = percent(hp,max_hp,100,1);
 				str name = GetCVarString(strparam(s:"hpbar_tracked_names", d:n));
 				HudMessage(s:hpp_to_color(hpp), d:hp, s:"/", d:max_hp, s:"\c-";HUDMSG_FADEOUT, HUD_TEXT_TRACKER_NAME_ID + rank, CR_WHITE, hpbar_align_right(x + 80), y + rank * 12.0, MINIMAL_HOLDTIME, MINIMAL_FADETIME);
 				HudMessage(s:hpp_to_color(hpp), d:hpp, s:"%\c-";HUDMSG_FADEOUT, HUD_TEXT_TRACKER_NAME_ID + NUM_RANKINGS + rank, CR_WHITE, hpbar_align_right(x + 120), y + rank * 12.0, MINIMAL_HOLDTIME, MINIMAL_FADETIME);
@@ -510,12 +508,15 @@ script "HPBar_Respawn" RESPAWN
 
 script "HPBar_HitTarget" (void)
 {
-	if(GetCVar("hpbar_rekt") == true)SetThingSpecial(0,ACS_NamedExecuteAlways,"HPBar_Rect",0,PlayerNumber());
-	while(ActorIsAlive(0))
+	int p_num = PlayerNumber();
+	if(GetCVar("hpbar_rekt") == true)SetThingSpecial(0,ACS_NamedExecuteAlways,"HPBar_Rect",0,p_num);
+	while(PlayerIsSpectator(p_num) == 0)
 	{
 		if(ActorIsAlive(0))LineAttack(0,GetActorAngle(0),GetActorPitch(0),0,"hpbar-testing-puff","None",8192.0,FHF_NORANDOMPUFFZ|FHF_NOIMPACTDECAL,0);
+		else break;
 		delay(1);
 		if(ActorIsAlive(0))LineAttack(0,GetActorAngle(0),GetActorPitch(0),0,"hpbar-testing-thru-puff","None",8192.0,FHF_NORANDOMPUFFZ|FHF_NOIMPACTDECAL,0);
+		else break;
 		delay(1);
 	}
 }
@@ -750,7 +751,7 @@ script "HPBar_Announcer" (int announcer_id_) CLIENTSIDE
 		PlaySound(0,sound,6|CHAN_NOPAUSE,1.0,false,ATTN_NONE);
 		PlaySound(0,sound,7|CHAN_NOPAUSE,1.0,false,ATTN_NONE);
 		SetHudSize(800,600,true);
-		SetFont("SMALLFONT");
+		SetFont(DEFAULT_FONT);
 		HudMessageBold(s:smalltext; HUDMSG_FADEOUT, HUD_TEXT_ANN_KILLER_NAME_ID, CR_WHITE, 400.0, 125.2, ANNOUNCER_HOLDTIME, ANNOUNCER_FADETIME);
 		HudMessageBold(s:tinytext; HUDMSG_FADEOUT, HUD_TEXT_ANN_TAUNT_ID, CR_WHITE, 400.0, 150.1, ANNOUNCER_HOLDTIME, ANNOUNCER_FADETIME);
 		SetHudSize(640,480,true);
