@@ -52,6 +52,9 @@ To support customized names for monsters in your mod, simply add the name to be 
 
 ## Changelogs
 
+### v25
+Исправлены ошибки.
+
 ### v24
 Удалены лишние функции в acs.
 Удалены лишние cvar.
