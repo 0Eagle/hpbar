@@ -1,6 +1,3 @@
-Note From Eagle:
-Поскольку PKMX/DOGE больше не активен, я решил взять на себя его работу. Я буду в Discord, если у вас есть проблемы.
-
 # HPBar & HP Tracker Mod
 
 This mod displays a HP bar and info about the target being aimed at. It also provides a HP tracker for boss monsters that is visible for all players including spectators.
