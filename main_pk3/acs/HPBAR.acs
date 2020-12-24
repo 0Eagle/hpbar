@@ -254,15 +254,16 @@ function void announce(int priority, str sound, str bigtext, str smalltext, str 
 
 function bool streq(str x, str y)
 {
-	return StrICmp(x, y) == 0;
+	return (StrICmp(x,y) == 0);
 }
 
 //Костыль заменяющий управляющие символы на текст.
 function str ccunescape_impl(str s, int n)
 {
+	if(streq(s,"") || (n >= strlen(s)))return "";
 	for(int i = n; i < (strlen(s)-1); i++)
 	{
-		if((GetChar(s, i) == '\\') && (GetChar(s, i + 1) == 'c'))
+		if((GetChar(s,i) == '\\') && (GetChar(s,i+1) == 'c'))
 		{
 			return strparam(s:strmid(s,n,i-n), s:"\c", s:ccunescape_impl(s,i+2));
 		}
@@ -278,15 +279,12 @@ function str ccunescape(str s)
 //Имена не могут быть объявлены как cvars из-за специальных символов, поэтому уладяем эти символы.
 function str normalize_class_impl(str s, int n)
 {
+	if(streq(s,"") || (n >= strlen(s)))return "";
 	for(int i = n; i < strlen(s); i++)
 	{
 		if(GetChar(s,i) == '~')
 		{
-			if(i < (strlen(s)-1))
-			{
-				return strparam(s:strmid(s,n,i-n), s:normalize_class_impl(s,i+1));
-			}
-			return strparam(s:strmid(s,n,i-n));
+			return strparam(s:strmid(s,n,i-n), s:normalize_class_impl(s,i+1));
 		}
 	}
 	return strmid(s,n,strlen(s));
@@ -577,7 +575,7 @@ script "HPBar_TrackerView" (int force_track)
 	if(ActorIsMonster(0) && (GetActorProperty(0, APROP_SpawnHealth) > 0) && (CheckInventory("MonsterAlreadyTracked") < 1))
 	{
 		// Should we track it?
-		if((force_track == 1) || (should_track() == true))
+		if((force_track == 1) || should_track())
 		{
 			// Найти пустой слот и получить трек номер.
 			int i = GetOrSetMonsterTrackNum();
