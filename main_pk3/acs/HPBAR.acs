@@ -203,7 +203,7 @@ function void show_full_hpbar(int hp, int max_hp, int hp_percentage, str name, b
 	SetHudSize(FULL_HUD_WIDTH, FULL_HUD_HEIGHT, true);
 	if(hp_percentage > 100)
 	{
-		SetFont(StrParam(s:"FILL",i:percent(hp,max_hp,140,false)));
+		SetFont(StrParam(s:"FILL",i:percent(hp,max_hp,14,false)));
 	}
 	else
 	{
