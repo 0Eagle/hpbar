@@ -30,7 +30,7 @@
 #define MAX_TRACKERS					32
 #define NUM_RANKINGS					10
 
-#define INVALID_TID						(-129)
+#define INVALID_TID						0
 
 //Шрифт по умолчанию
 #define DEFAULT_FONT					"SMALLFONT"
@@ -85,6 +85,11 @@ function bool ActorIsAlive(int tid)
 	return ((ClassifyActor(tid) & ACTOR_ALIVE) == ACTOR_ALIVE);
 }
 
+function bool ActorIsExists(int tid)
+{
+	return (ClassifyActor(tid) != ACTOR_NONE);
+}
+
 function int abs(int x)
 {
 	if(x < 0)return -x;
@@ -107,7 +112,7 @@ function bool get_bool_user_cvar(str cvar)
 
 function void clear_tracklist_tid(void)
 {
-	for(int i = 0; i < MAX_TRACKERS; ++i)
+	for(int i = 0; i < MAX_TRACKERS; i++)
 	{
 		tracked_tids[i] = INVALID_TID;
 	}
@@ -115,7 +120,7 @@ function void clear_tracklist_tid(void)
 
 function void clear_tracklist_name(void)
 {
-	for(int i = 0; i < MAX_TRACKERS; ++i)
+	for(int i = 0; i < MAX_TRACKERS; i++)
 	{
 		SetCVarString(strparam(s:"hpbar_tracked_names", d:i),"");
 	}
@@ -123,7 +128,7 @@ function void clear_tracklist_name(void)
 
 function bool already_selected(int x, int n)
 {
-	for(int i = 0; i < n; ++i)
+	for(int i = 0; i < n; i++)
 	{
 		if(x == maxhp_rankings[i])
 		{
@@ -158,26 +163,35 @@ function int HPBarSetTid(void)
 	return tid;
 }
 
+function str HPBarGetActorInfo(int i)
+{
+	tracked_hps[i] = GetActorProperty(0,APROP_Health);
+	tracked_max_hps[i] = GetActorProperty(0,APROP_SpawnHealth);
+	tracked_kills[i] = CheckInventory("MonsterScore");
+	tracked_invul[i] = get_actor_invul();
+	tracked_reflect[i] = CheckFlag(0,"REFLECTIVE");
+	tracked_friendly[i] = CheckFlag(0,"FRIENDLY");
+	return get_actor_name();
+}
+
 function int GetOrSetMonsterTrackNum(void)
 {
-	int TrackNum;
-	for(int i = 0; i < MAX_TRACKERS; ++i)
+	int TrackNum,i,j;
+	for(i = 1; (i < MAX_TRACKERS) && (j < MAX_TRACKERS); i++)
 	{
-		if(tracked_tids[i] == INVALID_TID)
+		if((tracked_tids[i] == INVALID_TID) || (!ActorIsExists(tracked_tids[i])) || (!CheckActorClass(tracked_tids[i],"hpbar-tracker")))
 		{
-			TrackNum = random(0,INT_MAX);
-			for(int j = 0; i < MAX_TRACKERS; ++i)
+			TrackNum = UniqueTID(0,0);
+			SpawnProjectile(0,"hpbar-tracker",GetActorAngle(0)>>8,0,0,0,TrackNum);
+			if(ThingCount(T_NONE,TrackNum) != 1)//проверить на наличие совпадающего tid.
 			{
-				if(tracked_tids[j] == TrackNum)
-				{
-					--i;
-					continue;
-				}
-				else if(tracked_tids[i] == INVALID_TID)
-				{
-					tracked_tids[i] = TrackNum;
-					return i;
-				}
+				j++;
+				continue;
+			}
+			else
+			{
+				tracked_tids[i] = TrackNum;
+				return i;
 			}
 		}
 	}
@@ -254,7 +268,7 @@ function void announce(int priority, str sound, str bigtext, str smalltext, str 
 		SetCVarString("hpbar_announcer_bigtext",bigtext);
 		SetCVarString("hpbar_announcer_smalltext",smalltext);
 		SetCVarString("hpbar_announcer_tinytext",tinytext);
-		SetCVar("hpbar_announcer_id",++announcer_id);
+		SetCVar("hpbar_announcer_id",announcer_id++);
 		ACS_NamedExecuteAlways("HPBar_Announcer",0,announcer_id);
 		ACS_NamedExecuteAlways("HPBar_AnnouncerCooldown",0);
 	}
@@ -369,7 +383,7 @@ function void request_broadcast_tracker_info(void)
 //==============================================================================
 script "HPBar_request_broadcast_tracker_info" (void) NET
 {
-	for(int i = 0; i < MAX_TRACKERS; ++i)
+	for(int i = 0; i < MAX_TRACKERS; i++)
 	{
 		if(tracked_tids[i] != INVALID_TID)
 		{
@@ -378,24 +392,10 @@ script "HPBar_request_broadcast_tracker_info" (void) NET
 	}
 }
 
-script "Copy_tracked_tids_to_Clientside" (int i, int tid) CLIENTSIDE
+script "Copy_tracked_tids_and_MaxHP_Clientside" (int i, int tid, int max_hps) CLIENTSIDE
 {
-	if(tid == INVALID_TID)
-	{
-		tracked_tids[i] = tid;
-	}
-	else
-	{
-		if(ActorIsAlive(0))
-		{
-			tracked_tids[i] = tid;
-			tracked_max_hps[i] = GetActorProperty(0,APROP_SpawnHealth);
-		}
-		else
-		{
-			tracked_tids[i] = INVALID_TID;
-		}
-	}
+	tracked_tids[i] = tid;
+	tracked_max_hps[i] = max_hps;
 }
 
 script "Copy_HP_and_Kills_to_Clientside" (int i, int hp, int kills) CLIENTSIDE
@@ -438,17 +438,17 @@ script "HPBar_Open-cs" OPEN CLIENTSIDE
 		{
 			x = to_int((GetCVar("hpbar_tracker_x") - 0.5) * GetScreenWidth() / GetScreenHeight() * TRACKER_HUD_HEIGHT) + (TRACKER_HUD_WIDTH / 2);
 			y = to_fixed(to_int((GetCVar("hpbar_tracker_y") - 0.5) * GetScreenHeight()) + (TRACKER_HUD_HEIGHT / 2));
-			for(rank = 0; rank < NUM_RANKINGS; ++rank)
+			for(rank = 0; rank < NUM_RANKINGS; rank++)
 			{
 				hp_limit = 0;
 				maxhp_limit = 0;
 				maxhp_rankings[rank] = -1;
-				for(i = 0; i < MAX_TRACKERS; ++i)
+				for(i = 0; i < MAX_TRACKERS; i++)
 				{
 					tid = tracked_tids[i];
 					if(tid != INVALID_TID)
 					{
-						if(already_selected(i, rank))continue;
+						if(already_selected(i,rank))continue;
 						max_hp = tracked_max_hps[i];
 						hp = tracked_hps[i];
 						friendly = tracked_friendly[i];
@@ -585,63 +585,91 @@ script "HPBar_LinebarView" (int p_num, int hp, int max_hp) CLIENTSIDE
 script "HPBar_TrackerView" (int force_track)
 {
 	// We only track monsters. :)
-	if(ActorIsMonster(0) && (GetActorProperty(0, APROP_SpawnHealth) > 0) && (CheckInventory("MonsterAlreadyTracked") < 1))
+	if(ActorIsMonster(0) && (GetActorProperty(0,APROP_SpawnHealth) > 0) && (CheckInventory("hpbar-tracker-cooldown") < 1) && (CheckInventory("MonsterAlreadyTracked") < 1))
 	{
+		GiveInventory("hpbar-tracker-cooldown",1);
 		// Should we track it?
 		if((force_track == 1) || should_track())
 		{
-			// Найти пустой слот и получить трек номер.
+			//Найти пустой слот, получить трек номер, создать актор трекера.
 			int i = GetOrSetMonsterTrackNum();
 			if(i != INVALID_TID)//Если не нашлось места в списке - остановить скрипт.
 			{
 				GiveInventory("MonsterAlreadyTracked",tracked_tids[i]);//Выдать трекномер монстру для отслеживания повторов.
-				ACS_NamedExecuteWithResult("Copy_tracked_tids_to_Clientside",i,tracked_tids[i]);
-				tracked_max_hps[i] = GetActorProperty(0,APROP_SpawnHealth);
+				int old_hp,old_kills;
+				bool old_invul,old_reflect,old_friendly;
+				str old_name;
+				str name = HPBarGetActorInfo(i);
 				str name_cvar = strparam(s:"hpbar_tracked_names", d:i);
-				// Keep updating clients the HP and name of the monster while it is alive.
-				while(ActorIsAlive(0) && (CheckInventory("MonsterAlreadyTracked") == tracked_tids[i]))
+				tracked_broadcast[i] = true;
+				while(ActorIsExists(tracked_tids[i]) && CheckActorClass(tracked_tids[i],"hpbar-tracker"))
 				{
-					if(tracked_broadcast[i] == true)
+					if(SetActivator(tracked_tids[i]) == 1)//переключение на трекер.
 					{
-						ACS_NamedExecuteWithResult("Copy_tracked_tids_to_Clientside",i,tracked_tids[i]);
+						SetUserVariable(0,"user_tracked_num",i);
+						SetActorProperty(0,APROP_ReactionTime,35);
+						if(tracked_broadcast[i])
+						{
+							ACS_NamedExecuteWithResult("Copy_tracked_tids_and_MaxHP_Clientside",i,tracked_tids[i],tracked_max_hps[i]);
+						}
+						if(tracked_broadcast[i] || (old_hp != tracked_hps[i]) || (old_kills != tracked_kills[i]))
+						{
+							ACS_NamedExecuteWithResult("Copy_HP_and_Kills_to_Clientside",i,tracked_hps[i],tracked_kills[i]);
+						}
+						if(tracked_broadcast[i] || (old_invul != tracked_invul[i]) || (old_reflect != tracked_reflect[i]) || (old_friendly != tracked_friendly[i]))
+						{
+							ACS_NamedExecuteWithResult("Copy_Invul_Reflect_Friendly_to_Clientside",i,tracked_invul[i],tracked_reflect[i],tracked_friendly[i]);
+						}
+						if(tracked_broadcast[i] || (!streq(old_name,name)))
+						{
+							tracked_broadcast[i] = false;
+							SetCVarString(name_cvar,name);
+						}
+						// Send monster HP
+						old_hp = tracked_hps[i];
+						old_kills = tracked_kills[i];
+						// Send monster invul, reflect, friendly
+						old_invul = tracked_invul[i];
+						old_reflect = tracked_reflect[i];
+						old_friendly = tracked_friendly[i];
+						// Send name of monster
+						old_name = name;
+						delay(1);
+						if(SetActivator(0,AAPTR_TARGET) == 1)//переключение на монстра.
+						{
+							if((!ActorIsAlive(0)) || (CheckInventory("MonsterAlreadyTracked") != tracked_tids[i]))break;
+							name = HPBarGetActorInfo(i);
+						}
+						else
+						{
+							break;
+						}
 					}
-					// Send monster HP
-					int old_hp = tracked_hps[i];
-					int old_kills = tracked_kills[i];
-					tracked_hps[i] = GetActorProperty(0,APROP_Health);
-					tracked_kills[i] = CheckInventory("MonsterScore");
-					if((old_hp != tracked_hps[i]) || (old_kills != tracked_kills[i]) || (tracked_broadcast[i] == true))
+					else
 					{
-						ACS_NamedExecuteWithResult("Copy_HP_and_Kills_to_Clientside",i,tracked_hps[i],tracked_kills[i]);
+						break;
 					}
-					// Send monster invul, reflect, friendly
-					bool old_invul = tracked_invul[i];
-					tracked_invul[i] = get_actor_invul();
-					bool old_reflect = tracked_reflect[i];
-					tracked_reflect[i] = CheckFlag(0,"REFLECTIVE");
-					bool old_friendly = tracked_friendly[i];
-					tracked_friendly[i] = CheckFlag(0,"FRIENDLY");
-					if((old_invul != tracked_invul[i]) || (old_reflect != tracked_reflect[i]) || (old_friendly != tracked_friendly[i]) || (tracked_broadcast[i] == true))
-					{
-						ACS_NamedExecuteWithResult("Copy_Invul_Reflect_Friendly_to_Clientside",i,tracked_invul[i],tracked_reflect[i],tracked_friendly[i]);
-					}
-					// Send name of monster
-					str old_name = GetCVarString(name_cvar);
-					str name = get_actor_name();
-					if((old_name == 0) || (!streq(old_name, name)) || (tracked_broadcast[i] == true))
-					{
-						tracked_broadcast[i] = false;
-						SetCVarString(name_cvar, name);
-					}
-					delay(1);
 				}
 				// The monster is dead, remove it from the slot and tell clients to stop tracking it.
 				tracked_tids[i] = INVALID_TID;
 				SetCVarString(strparam(s:"hpbar_tracked_names", d:i),"");
-				ACS_NamedExecuteWithResult("Copy_tracked_tids_to_Clientside",i,INVALID_TID);
+				ACS_NamedExecuteWithResult("Copy_tracked_tids_and_MaxHP_Clientside",i,INVALID_TID,0);
 			}
 			TakeInventory("MonsterAlreadyTracked",INT_MAX);
 		}
+	}
+}
+
+script "HPBar_TargetDeath" (void) //Костыль для сетевого говнокода.
+{
+	//The monster is dead, remove it from the slot and tell clients to stop tracking it.
+	int i = GetUserVariable(0,"user_tracked_num");
+	tracked_tids[i] = INVALID_TID;
+	SetCVarString(strparam(s:"hpbar_tracked_names", d:i),"");
+	ACS_NamedExecuteWithResult("Copy_tracked_tids_and_MaxHP_Clientside",i,INVALID_TID,0);
+	if(SetActivator(0,AAPTR_TARGET) == 1)
+	{
+		TakeInventory("MonsterAlreadyTracked",INT_MAX);
 	}
 }
 

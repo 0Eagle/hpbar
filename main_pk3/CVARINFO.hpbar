@@ -436,6 +436,7 @@ server noarchive string hpbar_tracked_names28 = "";
 server noarchive string hpbar_tracked_names29 = "";
 server noarchive string hpbar_tracked_names30 = "";
 server noarchive string hpbar_tracked_names31 = "";
+server noarchive string hpbar_tracked_names32 = "";
 
 server noarchive string hpbar_announcer_bigtext = "";
 server noarchive string hpbar_announcer_smalltext = "";

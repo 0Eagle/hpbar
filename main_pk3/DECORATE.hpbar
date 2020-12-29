@@ -45,3 +45,40 @@ States
 }
 
 Actor hpbar-testing-thru-puff : hpbar-testing-puff { +MTHRUSPECIES }
+
+Actor hpbar-tracker
+{
+Height 4
+Radius 4
+RenderStyle None
+ReactionTime 35
++NOSECTOR
++DONTBLAST
++NOKILLSCRIPTS
++NOINTERACTION
++NOTONAUTOMAP
++SERVERSIDEONLY
++NONETID
+var int user_tracked_num;
+States
+	{
+	Spawn:
+		TNT1 A 1
+	SpawnLoop:
+		TNT1 A 1 A_CountDown
+		Loop
+	Death:
+		TNT1 A 0
+		TNT1 A 10 ACS_NamedExecuteAlways("HPBar_TargetDeath",0)
+		Stop
+	}
+}
+
+Actor hpbar-tracker-cooldown : PowerDamage
+{
+-INVENTORY.INVBAR
++INVENTORY.UNDROPPABLE
++INVENTORY.ALWAYSPICKUP
+DamageFactor "nothing", 1.0
+Powerup.duration -1
+}
