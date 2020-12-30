@@ -392,7 +392,7 @@ script "HPBar_request_broadcast_tracker_info" (void) NET
 	}
 }
 
-script "Copy_tracked_tids_and_MaxHP_Clientside" (int i, int tid, int max_hps) CLIENTSIDE
+script "Copy_tracked_tid_and_MaxHP_to_Clientside" (int i, int tid, int max_hps) CLIENTSIDE
 {
 	tracked_tids[i] = tid;
 	tracked_max_hps[i] = max_hps;
@@ -610,7 +610,7 @@ script "HPBar_TrackerView" (int force_track)
 						SetActorProperty(0,APROP_ReactionTime,35);
 						if(tracked_broadcast[i])
 						{
-							ACS_NamedExecuteWithResult("Copy_tracked_tids_and_MaxHP_Clientside",i,tracked_tids[i],tracked_max_hps[i]);
+							ACS_NamedExecuteWithResult("Copy_tracked_tid_and_MaxHP_to_Clientside",i,tracked_tids[i],tracked_max_hps[i]);
 						}
 						if(tracked_broadcast[i] || (old_hp != tracked_hps[i]) || (old_kills != tracked_kills[i]))
 						{
@@ -651,11 +651,23 @@ script "HPBar_TrackerView" (int force_track)
 					}
 				}
 				// The monster is dead, remove it from the slot and tell clients to stop tracking it.
+				int tracked_tid = tracked_tids[i];
 				tracked_tids[i] = INVALID_TID;
 				SetCVarString(strparam(s:"hpbar_tracked_names", d:i),"");
-				ACS_NamedExecuteWithResult("Copy_tracked_tids_and_MaxHP_Clientside",i,INVALID_TID,0);
+				ACS_NamedExecuteWithResult("Copy_tracked_tid_and_MaxHP_to_Clientside",i,INVALID_TID,0);
+				if((SetActivator(tracked_tid) == 1) && CheckActorClass(tracked_tid,"hpbar-tracker"))
+				{
+					SetUserVariable(0,"user_tracked_num",0);
+					if(SetActivator(0,AAPTR_TARGET) == 1)
+					{
+						TakeInventory("MonsterAlreadyTracked",INT_MAX);
+					}
+				}
+				else
+				{
+					TakeInventory("MonsterAlreadyTracked",INT_MAX);
+				}
 			}
-			TakeInventory("MonsterAlreadyTracked",INT_MAX);
 		}
 	}
 }
@@ -664,12 +676,20 @@ script "HPBar_TargetDeath" (void) //Костыль для сетевого го�
 {
 	//The monster is dead, remove it from the slot and tell clients to stop tracking it.
 	int i = GetUserVariable(0,"user_tracked_num");
-	tracked_tids[i] = INVALID_TID;
-	SetCVarString(strparam(s:"hpbar_tracked_names", d:i),"");
-	ACS_NamedExecuteWithResult("Copy_tracked_tids_and_MaxHP_Clientside",i,INVALID_TID,0);
-	if((i > 0) && (SetActivator(0,AAPTR_TARGET) == 1))
+	if(i > 0)
 	{
-		TakeInventory("MonsterAlreadyTracked",INT_MAX);
+		tracked_tids[i] = INVALID_TID;
+		SetCVarString(strparam(s:"hpbar_tracked_names", d:i),"");
+		ACS_NamedExecuteWithResult("Copy_tracked_tid_and_MaxHP_to_Clientside",i,INVALID_TID,0);
+		Thing_ChangeTID(0,0);
+		if(SetActivator(0,AAPTR_TARGET) == 1)
+		{
+			TakeInventory("MonsterAlreadyTracked",INT_MAX);
+		}
+	}
+	else
+	{
+		Thing_ChangeTID(0,0);
 	}
 }
 
