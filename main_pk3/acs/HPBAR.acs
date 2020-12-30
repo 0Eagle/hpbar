@@ -27,7 +27,7 @@
 #define TRACKER_HUD_WIDTH				1024
 #define TRACKER_HUD_HEIGHT				768
 
-#define MAX_TRACKERS					32
+#define MAX_TRACKERS					33
 #define NUM_RANKINGS					10
 
 #define INVALID_TID						0
@@ -195,7 +195,7 @@ function int GetOrSetMonsterTrackNum(void)
 			}
 		}
 	}
-	return INVALID_TID;
+	return 0;
 }
 
 function str hpp_to_color(int p)
@@ -548,8 +548,9 @@ script "HPBar_GetTarget" (void)
 				{
 					ACS_NamedExecuteAlways("HPBar_LinebarView",0,p_num,hp,max_hp);
 				}
-				if(GetCVar("hpbar_tracker"))
+				if(GetCVar("hpbar_tracker") && (CheckInventory("hpbar-tracker-cooldown") < 1))
 				{
+					GiveInventory("hpbar-tracker-cooldown",1);
 					ACS_NamedExecuteAlways("HPBar_TrackerView",0,0);
 				}
 			}
@@ -585,15 +586,14 @@ script "HPBar_LinebarView" (int p_num, int hp, int max_hp) CLIENTSIDE
 script "HPBar_TrackerView" (int force_track)
 {
 	// We only track monsters. :)
-	if(ActorIsMonster(0) && (GetActorProperty(0,APROP_SpawnHealth) > 0) && (CheckInventory("hpbar-tracker-cooldown") < 1) && (CheckInventory("MonsterAlreadyTracked") < 1))
+	if(ActorIsMonster(0) && (GetActorProperty(0,APROP_SpawnHealth) > 0) && (CheckInventory("MonsterAlreadyTracked") < 1))
 	{
-		GiveInventory("hpbar-tracker-cooldown",1);
 		// Should we track it?
 		if((force_track == 1) || should_track())
 		{
 			//Найти пустой слот, получить трек номер, создать актор трекера.
 			int i = GetOrSetMonsterTrackNum();
-			if(i != INVALID_TID)//Если не нашлось места в списке - остановить скрипт.
+			if(i > 0)//Если не нашлось места в списке - остановить скрипт.
 			{
 				GiveInventory("MonsterAlreadyTracked",tracked_tids[i]);//Выдать трекномер монстру для отслеживания повторов.
 				int old_hp,old_kills;
@@ -667,7 +667,7 @@ script "HPBar_TargetDeath" (void) //Костыль для сетевого го�
 	tracked_tids[i] = INVALID_TID;
 	SetCVarString(strparam(s:"hpbar_tracked_names", d:i),"");
 	ACS_NamedExecuteWithResult("Copy_tracked_tids_and_MaxHP_Clientside",i,INVALID_TID,0);
-	if(SetActivator(0,AAPTR_TARGET) == 1)
+	if((i > 0) && (SetActivator(0,AAPTR_TARGET) == 1))
 	{
 		TakeInventory("MonsterAlreadyTracked",INT_MAX);
 	}
