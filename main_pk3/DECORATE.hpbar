@@ -52,6 +52,7 @@ Height 4
 Radius 4
 RenderStyle None
 ReactionTime 35
++NOCLIP
 +NOSECTOR
 +DONTBLAST
 +NOKILLSCRIPTS

@@ -1,0 +1,49 @@
+//////////////////////////////////////////////
+/////= New colour codes by Giga Otomia.=//////
+/////= They are entirely self-serving. =//////
+//////////////////////////////////////////////
+
+// Giga1 - Otomia Olive //
+01 {
+	#2c3e20 #2c3e20 0 7
+	#44aa00 #44aa00 8 256
+Console:
+	#2c3e20 #395228 0 127
+	#44aa00 #6ace28 128 256
+}
+
+// Giga2 - GiGold, aka Dark Yellow //
+02 {
+	#555500 #555500 0 7
+	#aaaa00 #aaaa00 8 256
+Console:
+	#555500 #666600 0 127
+	#aaaa00 #c9c93f 128 256
+}
+
+// Giga3 - The Remains of my Enemies //
+03 {
+	#550000 #550000 0 7
+	#aa0000 #aa0000 8 256
+Console:
+	#440000 #550000 0 127
+	#880000 #b05b5b 128 256
+}
+
+// Giga4 - Desaturated Olive //
+04 {
+	#525252 #525252 0 7
+	#aaaaaa #aaaaaa 8 256
+Console:
+	#525252 #6c6c6c 0 127
+	#aaaaaa #cecece 128 256
+}
+
+// Giga5 - Can I please not sit on the toilet for half an hour this time? aka Dirt //
+05 {
+	#4b3b22 #4b3b22 0 7
+	#6f5a3a #6f5a3a 8 256
+Console:
+	#4b3b22 #523200 0 127
+	#6f5a3a #3d780e 128 256
+}

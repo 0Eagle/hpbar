@@ -195,16 +195,39 @@ function int GetOrSetMonsterTrackNum(void)
 			}
 		}
 	}
+	//there was no room: replace for weakest monster
+	if(j < MAX_TRACKERS)
+	{
+		j = 0;
+		int lowestHP = INT_MAX;
+		int hp;
+		for(i = 1; i < MAX_TRACKERS; i++)
+		{
+			hp = percent(tracked_hps[i],tracked_max_hps[i],100,true);
+			if(hp < lowestHP)
+			{
+				j = i;
+				lowestHP = hp;
+			}
+		}
+		if(j > 0)
+		{
+			TrackNum = UniqueTID(0,0);
+			SpawnProjectile(0,"hpbar-tracker",GetActorAngle(0)>>8,0,0,0,TrackNum);
+			tracked_tids[j] = TrackNum;
+			return j;
+		}
+	}
 	return 0;
 }
 
 function str hpp_to_color(int p)
 {
-	if(p >= 100)return "\c[x5]";
-	else if(p >= 75)return "\c[a6]";
-	else if(p >= 50)return "\ck";
-	else if(p >= 25)return "\c[o4]";
-	return "\cr";
+	if(p <= 25)return "\c[d4]";
+	else if(p <= 50)return "\c[o4]";
+	else if(p <= 75)return "\c[e9]";
+	else if(p <= 100)return "\c[m4]";
+	return "\c[x5]";
 }
 
 function void HPBarLineStateMsg(str statemsg, int ln)
