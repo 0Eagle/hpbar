@@ -1,6 +1,10 @@
 #library "HPBAR"
 #include "zcommon.acs"
 
+//The maximum number of players connected to the server.
+#define MAX_CLIENT_COUNT 	64
+int MaxClientsCount = 0;
+
 #define INT_MAX							2147483647
 #define STYLE_FULL						1
 #define STYLE_MINIMAL					2
@@ -88,6 +92,33 @@ function bool ActorIsAlive(int tid)
 function bool ActorIsExists(int tid)
 {
 	return (ClassifyActor(tid) != ACTOR_NONE);
+}
+
+function bool IsGameTypeSinglePlayer(void)
+{
+	return (SinglePlayer() || (GameType() == GAME_SINGLE_PLAYER));
+}
+
+function int MaxPlayersInGame(void)
+{
+	if(MaxClientsCount > 0)return MaxClientsCount;
+	if(!IsGameTypeSinglePlayer())
+	{
+		MaxClientsCount = abs(GetCVAR("sv_maxclients"));
+		if(MaxClientsCount > MAX_CLIENT_COUNT)
+		{
+			MaxClientsCount = MAX_CLIENT_COUNT;
+		}
+		else if(MaxClientsCount <= 0)
+		{
+			MaxClientsCount = 8;//GZDoom или прочее "сетовое" говно.
+		}
+	}
+	else
+	{
+		MaxClientsCount = 1;
+	}
+	return MaxClientsCount;
 }
 
 function int abs(int x)
@@ -401,11 +432,6 @@ function bool get_actor_invul(void)
 
 function void request_broadcast_tracker_info(void)
 {
-	NamedRequestScriptPuke("HPBar_request_broadcast_tracker_info");
-}
-//==============================================================================
-script "HPBar_request_broadcast_tracker_info" (void) NET
-{
 	for(int i = 0; i < MAX_TRACKERS; i++)
 	{
 		if(tracked_tids[i] != INVALID_TID)
@@ -414,7 +440,7 @@ script "HPBar_request_broadcast_tracker_info" (void) NET
 		}
 	}
 }
-
+//==============================================================================
 script "Copy_tracked_tid_and_MaxHP_to_Clientside" (int i, int tid, int max_hps) CLIENTSIDE
 {
 	tracked_tids[i] = tid;
@@ -439,34 +465,49 @@ script "HPBar_Open" OPEN
 {
 	clear_tracklist_tid();
 	clear_tracklist_name();
+	int MaxPlayers = MaxPlayersInGame();
+	int OldPlayers,Players,i;
+	while(1)
+	{
+		OldPlayers = Players;
+		Players = 0;
+		for(i = 0; i < MaxPlayers; i++)
+		{
+			if((PlayerInGame(i) || (PlayerIsSpectator(i) == 1)) && !PlayerIsBot(i))
+			{
+				Players++;
+			}
+		}
+		if(OldPlayers != Players)
+		{
+			request_broadcast_tracker_info();
+		}
+		Delay(35);
+	}
 }
 
 //Запуск трекера на клиенте.
 script "HPBar_Open-cs" OPEN CLIENTSIDE
 {
 	delay(random(30,40));
-	//Очистка списков на клиенте
-	clear_tracklist_tid();
-	//запрос обновления списков с сервера.
-	request_broadcast_tracker_info();
-	delay(1);
 	int x,y,rank,hp_limit,maxhp_limit,i,tid,max_hp,hp,n,hpp,kills;
-	bool friendly;
+	bool friendly,friendly_show;
 	str name,statemsg,killsmsg;
 	SetHudSize(TRACKER_HUD_WIDTH, TRACKER_HUD_HEIGHT, false);
 	while(true)
 	{
 		delay(1);
-		if(GetCVar("hpbar_tracker") == true)
+		if(GetCVar("hpbar_tracker"))
 		{
 			x = to_int((GetCVar("hpbar_tracker_x") - 0.5) * GetScreenWidth() / GetScreenHeight() * TRACKER_HUD_HEIGHT) + (TRACKER_HUD_WIDTH / 2);
 			y = to_fixed(to_int((GetCVar("hpbar_tracker_y") - 0.5) * GetScreenHeight()) + (TRACKER_HUD_HEIGHT / 2));
+			friendly_show = get_bool_user_cvar("hpbar_show_friendly");
 			for(rank = 0; rank < NUM_RANKINGS; rank++)
 			{
 				hp_limit = 0;
 				maxhp_limit = 0;
 				maxhp_rankings[rank] = -1;
-				for(i = 0; i < MAX_TRACKERS; i++)
+				for(i = 1; i < MAX_TRACKERS; i++)
 				{
 					tid = tracked_tids[i];
 					if(tid != INVALID_TID)
@@ -475,13 +516,13 @@ script "HPBar_Open-cs" OPEN CLIENTSIDE
 						max_hp = tracked_max_hps[i];
 						hp = tracked_hps[i];
 						friendly = tracked_friendly[i];
-						if((max_hp > maxhp_limit) && (!friendly || get_bool_user_cvar("hpbar_show_friendly")))
+						if((max_hp > maxhp_limit) && (!friendly || friendly_show))
 						{
 							maxhp_rankings[rank] = i;
 							maxhp_limit = max_hp;
 							hp_limit = hp;
 						}
-						else if((max_hp == maxhp_limit) && (hp > hp_limit) && (!friendly || get_bool_user_cvar("hpbar_show_friendly")))
+						else if((max_hp == maxhp_limit) && (hp > hp_limit) && (!friendly || friendly_show))
 						{
 							maxhp_rankings[rank] = i;
 							hp_limit = hp;
