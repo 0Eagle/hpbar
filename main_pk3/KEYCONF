@@ -1,0 +1,4 @@
+ADDKEYSECTION	"HP Bar"		HPBAR_Setup
+ADDMENUKEY		"HP Bar Menu"	OpenHPBarMenu
+ALIAS			OpenHPBarMenu	"OpenMenu HPBarConsoleVariables"
+DEFAULTBIND		H				OpenHPBarMenu

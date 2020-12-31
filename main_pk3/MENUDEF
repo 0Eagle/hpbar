@@ -1,0 +1,19 @@
+OptionValue "MDhpbar_style"
+{
+	1, "FULL"
+	2, "MINIMAL"
+	0, "DISABLE"
+}
+
+OPTIONMENU "HPBarConsoleVariables"
+{
+	TITLE "HPBAR OPTIONS"
+	STATICTEXT " "
+	OPTION "STYLE: FULL OR MINIMAL","hpbar_style","MDhpbar_style"
+	OPTION "SHOW FRIENDLY","hpbar_show_friendly","ONOFF"
+	OPTION "ANNOUNCER","hpbar_announcer","ONOFF"
+	OPTION "REKT","hpbar_rekt","ONOFF"
+	SLIDER "THRESHOLD","hpbar_threshold", 0, 5000, 100 , 0
+	OPTION "TRACKER","hpbar_tracker","ONOFF"
+	SLIDER "TRACKER THRESHOLD", "hpbar_tracker_threshold", 0, 5000, 100 , 0
+}
