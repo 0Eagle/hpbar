@@ -74,6 +74,12 @@ function int to_int(int num)
 	return (num >> 16);
 }
 
+function int abs(int x)
+{
+	if(x < 0)return -x;
+	return x;
+}
+
 function bool ActorIsPlayer(int tid)
 {
 	return ((ClassifyActor(tid) & ACTOR_PLAYER) == ACTOR_PLAYER);
@@ -119,12 +125,6 @@ function int MaxPlayersInGame(void)
 		MaxClientsCount = 1;
 	}
 	return MaxClientsCount;
-}
-
-function int abs(int x)
-{
-	if(x < 0)return -x;
-	return x;
 }
 
 function int percent(int current, int maximum, int maxpercent, bool overflow)
