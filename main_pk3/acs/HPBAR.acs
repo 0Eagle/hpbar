@@ -117,7 +117,7 @@ function int MaxPlayersInGame(void)
 		}
 		else if(MaxClientsCount <= 0)
 		{
-			MaxClientsCount = 8;//GZDoom или прочее "сетовое" говно.
+			MaxClientsCount = 8;//GZDoom или прочее "сетевое" говно.
 		}
 	}
 	else
@@ -678,8 +678,8 @@ script "HPBar_LinebarView" (int p_num, int hp, int max_hp) CLIENTSIDE
 script "HPBar_TrackerView" (int force_track)
 {
 	// We only track monsters. :)
-	int TrackNum = CheckInventory("MonsterAlreadyTracked");
-	if(ActorIsMonster(0) && (GetActorProperty(0,APROP_SpawnHealth) > 0) && ((TrackNum < 1) || !(ActorIsExists(TrackNum) && CheckActorClass(TrackNum,"hpbar-tracker"))))
+	int tracked_tid = CheckInventory("MonsterAlreadyTracked");
+	if(ActorIsMonster(0) && (GetActorProperty(0,APROP_SpawnHealth) > 0) && ((tracked_tid < 1) || !(ActorIsExists(tracked_tid) && CheckActorClass(tracked_tid,"hpbar-tracker"))))
 	{
 		// Should we track it?
 		if((force_track == 1) || should_track())
@@ -689,14 +689,15 @@ script "HPBar_TrackerView" (int force_track)
 			if(i > 0)//Если не нашлось места в списке - остановить скрипт.
 			{
 				GiveInventory("MonsterAlreadyTracked",tracked_tids[i]);//Выдать трекномер монстру для отслеживания повторов.
+				tracked_tid = tracked_tids[i];
 				int old_hp,old_kills;
 				bool old_invul,old_reflect,old_friendly;
 				str name = HPBarGetActorInfo(i);
 				str name_cvar = strparam(s:"hpbar_tracked_names", d:i);
 				tracked_broadcast[i] = true;
-				while(ActorIsExists(tracked_tids[i]) && CheckActorClass(tracked_tids[i],"hpbar-tracker"))
+				while(ActorIsExists(tracked_tid) && CheckActorClass(tracked_tid,"hpbar-tracker"))
 				{
-					if(SetActivator(tracked_tids[i]) == 1)//переключение на трекер.
+					if(SetActivator(tracked_tid) == 1)//переключение на трекер.
 					{
 						SetUserVariable(0,"user_tracked_num",i);
 						SetActorProperty(0,APROP_ReactionTime,35);
@@ -727,8 +728,14 @@ script "HPBar_TrackerView" (int force_track)
 						delay(1);
 						if(SetActivator(0,AAPTR_TARGET) == 1)//переключение на монстра.
 						{
-							if((!ActorIsAlive(0)) || (CheckInventory("MonsterAlreadyTracked") != tracked_tids[i]))break;
-							name = HPBarGetActorInfo(i);
+							if(ActorIsAlive(0) && (tracked_tid == tracked_tids[i]))
+							{
+								name = HPBarGetActorInfo(i);
+							}
+							else
+							{
+								break;
+							}
 						}
 						else
 						{
@@ -741,9 +748,11 @@ script "HPBar_TrackerView" (int force_track)
 					}
 				}
 				// The monster is dead, remove it from the slot and tell clients to stop tracking it.
-				int tracked_tid = tracked_tids[i];
-				HPBarResetActorInfo(i);
-				ACS_NamedExecuteWithResult("Copy_tracked_tid_and_MaxHP_to_Clientside",i,INVALID_TID,0);
+				if(tracked_tid == tracked_tids[i])
+				{
+					HPBarResetActorInfo(i);
+					ACS_NamedExecuteWithResult("Copy_tracked_tid_and_MaxHP_to_Clientside",i,INVALID_TID,0);
+				}
 				if((SetActivator(tracked_tid) == 1) && CheckActorClass(tracked_tid,"hpbar-tracker"))
 				{
 					SetUserVariable(0,"user_tracked_num",0);
