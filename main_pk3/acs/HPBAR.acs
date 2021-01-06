@@ -684,6 +684,7 @@ script "HPBar_TrackerView" (int force_track)
 		// Should we track it?
 		if((force_track == 1) || should_track())
 		{
+			TakeInventory("MonsterAlreadyTracked",INT_MAX);
 			//Найти пустой слот, получить трек номер, создать актор трекера.
 			int i = GetOrSetMonsterTrackNum();
 			if(i > 0)//Если не нашлось места в списке - остановить скрипт.
@@ -728,7 +729,7 @@ script "HPBar_TrackerView" (int force_track)
 						delay(1);
 						if(SetActivator(0,AAPTR_TARGET) == 1)//переключение на монстра.
 						{
-							if(ActorIsAlive(0) && (tracked_tid == tracked_tids[i]))
+							if(ActorIsAlive(0) && (tracked_tid == tracked_tids[i]) && (tracked_tid == CheckInventory("MonsterAlreadyTracked")))
 							{
 								name = HPBarGetActorInfo(i);
 							}
