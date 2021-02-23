@@ -13,3 +13,18 @@ hpbar/unstoppable		"sounds/hpbar/unstoppable.ogg"
 hpbar/godlike			"sounds/hpbar/godlike.ogg"
 hpbar/wickedsick		"sounds/hpbar/wickedsick.ogg"
 hpbar/firstblood		"sounds/hpbar/firstblood.ogg"
+$limit hpbar/doublekill		4
+$limit hpbar/multikill		4
+$limit hpbar/megakill		4
+$limit hpbar/ultrakill		4
+$limit hpbar/monsterkill	4
+$limit hpbar/ludicrouskill	4
+$limit hpbar/holyshit		4
+$limit hpbar/sexyholyshit	4
+$limit hpbar/killingspree	4
+$limit hpbar/rampage		4
+$limit hpbar/dominating		4
+$limit hpbar/unstoppable	4
+$limit hpbar/godlike		4
+$limit hpbar/wickedsick		4
+$limit hpbar/firstblood		4
