@@ -521,6 +521,7 @@ script "HPBar_Open-cs" OPEN CLIENTSIDE
 	bool friendly,friendly_show;
 	str name,statemsg,killsmsg;
 	SetHudSize(TRACKER_HUD_WIDTH, TRACKER_HUD_HEIGHT, false);
+	SetFont(DEFAULT_FONT);
 	while(true)
 	{
 		delay(1);
