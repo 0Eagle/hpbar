@@ -7,6 +7,7 @@ Height 4
 Radius 4
 RenderStyle None
 Decal None
++NOTIMEFREEZE
 +NODECAL
 +NOGRAVITY
 +NOBLOCKMAP 
@@ -52,6 +53,7 @@ Height 4
 Radius 4
 RenderStyle None
 ReactionTime 35
++NOTIMEFREEZE
 +NOCLIP
 +NOSECTOR
 +DONTBLAST
@@ -78,6 +80,7 @@ States
 
 Actor hpbar-tracker-cooldown : PowerDamage
 {
++NOTIMEFREEZE
 -INVENTORY.INVBAR
 +INVENTORY.UNDROPPABLE
 +INVENTORY.ALWAYSPICKUP

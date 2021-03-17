@@ -28,13 +28,20 @@ int MaxClientsCount = 0;
 #define MINIMAL_HP_X					640.0
 #define MINIMAL_HP_Y					500.0
 
-#define TRACKER_HUD_WIDTH				1024
-#define TRACKER_HUD_HEIGHT				768
+#define TRACKER_HUD_WIDTH				960
+#define TRACKER_HUD_HEIGHT				720
 
 #define MAX_TRACKERS					33
 #define NUM_RANKINGS					10
 
 #define INVALID_TID						0
+
+#define  FLAG_FRIENDLY					1
+#define  FLAG_REFLECTIVE				2
+#define  FLAG_INVULNERABLE				4
+#define  FLAG_GHOST						8
+#define  FLAG_INVISIBLE					16
+#define  FLAG_STEALTH					32
 
 //Шрифт по умолчанию
 #define DEFAULT_FONT					"SMALLFONT"
@@ -49,13 +56,13 @@ int MaxClientsCount = 0;
 #define HUD_TEXT_ANN_TAUNT_ID			7102
 #define HUD_TEXT_ANN_KILLER_SCORE_ID	7101
 
+bool tracked_broadcast[MAX_TRACKERS];
+int tracked_counter[MAX_TRACKERS];
+str tracked_name[MAX_TRACKERS];
 int tracked_tids[MAX_TRACKERS];
 int tracked_hps[MAX_TRACKERS];
 int tracked_max_hps[MAX_TRACKERS];
-bool tracked_friendly[MAX_TRACKERS];
-bool tracked_invul[MAX_TRACKERS];
-bool tracked_reflect[MAX_TRACKERS];
-bool tracked_broadcast[MAX_TRACKERS];
+int tracked_flags[MAX_TRACKERS];
 int tracked_kills[MAX_TRACKERS];
 int maxhp_rankings[NUM_RANKINGS];
 int announcers_playing = 0;
@@ -63,9 +70,9 @@ int announcer_priority = -1;
 int announcer_id = 0;
 bool firstblood = false;
 //==============================================================================
-function int to_fixed(int x)
+function int to_fixed(int num)
 {
-	return (x << 16);
+	return (num << 16);
 }
 
 function int to_int(int num)
@@ -178,28 +185,6 @@ function int HPBarSetTid(void)
 	return tid;
 }
 
-function str HPBarGetActorInfo(int i)
-{
-	tracked_hps[i] = GetActorProperty(0,APROP_Health);
-	tracked_max_hps[i] = GetActorProperty(0,APROP_SpawnHealth);
-	tracked_kills[i] = CheckInventory("MonsterScore");
-	tracked_invul[i] = get_actor_invul();
-	tracked_reflect[i] = CheckFlag(0,"REFLECTIVE");
-	tracked_friendly[i] = CheckFlag(0,"FRIENDLY");
-	return get_actor_name();
-}
-
-function void HPBarResetActorInfo(int i)
-{
-	tracked_hps[i] = INVALID_TID;
-	tracked_max_hps[i] = 0;
-	tracked_kills[i] = 0;
-	tracked_invul[i] = false;
-	tracked_reflect[i] = false;
-	tracked_friendly[i] = false;
-	SetCVarString(strparam(s:"hpbar_tracked_names", d:i),"");
-}
-
 function void clear_tracklist(void)
 {
 	for(int i = 0; i < MAX_TRACKERS; i++)
@@ -270,7 +255,7 @@ function void HPBarLineStateMsg(str statemsg, int ln)
 	HudMessageBold(s:statemsg; HUDMSG_FADEOUT, HUD_TEXT_TARGET_PROP_ID + ln, CR_WHITE, FULL_HPBAR_X, FULL_INFO_Y + to_fixed(ln * 10), FULL_HOLDTIME, FULL_FADETIME);
 }
 
-function void show_full_hpbar(int hp, int max_hp, int hp_percentage, str name, bool invul, bool friendly, bool reflect)
+function void show_full_hpbar(int hp, int max_hp, int hp_percentage, str name, bool invul, bool friendly, bool reflect, bool ghost)
 {
 	SetHudSize(FULL_HUD_WIDTH, FULL_HUD_HEIGHT, true);
 	if(hp_percentage > 100)
@@ -304,6 +289,11 @@ function void show_full_hpbar(int hp, int max_hp, int hp_percentage, str name, b
 	if(friendly)
 	{
 		HPBarLineStateMsg("\c[i7]Friendly\c-",ln);
+		ln++;
+	}
+	if(ghost)
+	{
+		HPBarLineStateMsg("\c[d9]Ghost\c-",ln);
 		ln++;
 	}
 }
@@ -341,7 +331,14 @@ function bool streq(str x, str y)
 //Костыль заменяющий управляющие символы на текст.
 function str ccunescape_impl(str s, int n)
 {
-	if(streq(s,"") || (n >= strlen(s)))return "";
+	if(streq(s,""))
+	{
+		return "";
+	}
+	else if(n >= strlen(s))
+	{
+		return "";
+	}
 	for(int i = n; i < (strlen(s)-1); i++)
 	{
 		if((GetChar(s,i) == '\\') && (GetChar(s,i+1) == 'c'))
@@ -357,10 +354,16 @@ function str ccunescape(str s)
 	return ccunescape_impl(s,0);
 }
 
-//Имена не могут быть объявлены как cvars из-за специальных символов, поэтому уладяем эти символы.
 function str normalize_class_impl(str s, int n)
 {
-	if(streq(s,"") || (n >= strlen(s)))return "";
+	if(streq(s,""))
+	{
+		return "";
+	}
+	else if(n >= strlen(s))
+	{
+		return "";
+	}
 	for(int i = n; i < strlen(s); i++)
 	{
 		if(GetChar(s,i) == '~')
@@ -432,7 +435,12 @@ function bool should_track(void)
 
 function bool get_actor_invul(void)
 {
-	return (CheckFlag(0,"INVULNERABLE") || (!CheckFlag(0,"SHOOTABLE")) || CheckFlag(0,"NODAMAGE"));
+	return (CheckFlag(0,"INVULNERABLE") || (!CheckFlag(0,"SHOOTABLE")) || CheckFlag(0,"NODAMAGE") || CheckFlag(0,"DORMANT"));
+}
+
+function bool get_actor_invis(void)
+{
+	return (CheckFlag(0,"INVISIBLE") || ((GetActorProperty(0,APROP_Alpha) < 0.33) && (GetActorProperty(0,APROP_RenderStyle) != STYLE_Normal)));
 }
 
 function void request_broadcast_tracker_info(void)
@@ -444,6 +452,31 @@ function void request_broadcast_tracker_info(void)
 			tracked_broadcast[i] = true;
 		}
 	}
+}
+
+function str HPBarGetActorInfo(int i)
+{
+	tracked_counter[i]++;
+	if(tracked_broadcast[i] || (tracked_counter[i] > 7))//запуск каждый седьмой вызов.
+	{
+		tracked_counter[i] = 0;
+		tracked_hps[i] = GetActorProperty(0,APROP_Health);
+		tracked_max_hps[i] = GetActorProperty(0,APROP_SpawnHealth);
+		tracked_kills[i] = CheckInventory("MonsterScore");
+		tracked_flags[i] = (get_actor_invis() * FLAG_INVISIBLE) + (get_actor_invul() * FLAG_INVULNERABLE) + (CheckFlag(0,"REFLECTIVE") * FLAG_REFLECTIVE) + (CheckFlag(0,"FRIENDLY") * FLAG_FRIENDLY) + (CheckFlag(0,"GHOST") * FLAG_GHOST) + (CheckFlag(0,"STEALTH") * FLAG_STEALTH);
+		tracked_name[i] = get_actor_name();
+	}
+	return tracked_name[i];
+}
+
+function void HPBarResetActorInfo(int i)
+{
+	tracked_hps[i] = INVALID_TID;
+	tracked_max_hps[i] = 0;
+	tracked_kills[i] = 0;
+	tracked_flags[i] = 0;
+	tracked_counter[i] = 0;
+	SetCVarString(strparam(s:"hpbar_tracked_names", d:i),"");
 }
 //==============================================================================
 script "Copy_tracked_tid_and_MaxHP_to_Clientside" (int i, int tid, int max_hps) CLIENTSIDE
@@ -458,11 +491,9 @@ script "Copy_HP_and_Kills_to_Clientside" (int i, int hp, int kills) CLIENTSIDE
 	tracked_kills[i] = kills;
 }
 
-script "Copy_Invul_Reflect_Friendly_to_Clientside" (int i, int invul, int reflect, int friendly) CLIENTSIDE
+script "Copy_Invul_Reflect_Friendly_to_Clientside" (int i, int tracked_flags_) CLIENTSIDE
 {
-	tracked_invul[i] = invul;
-	tracked_reflect[i] = reflect;
-	tracked_friendly[i] = friendly;
+	tracked_flags[i] = tracked_flags_;
 }
 //==============================================================================
 //Очистка списков на срвере
@@ -518,9 +549,9 @@ script "HPBar_Open-cs" OPEN CLIENTSIDE
 {
 	delay(35+(ConsolePlayerNumber()/4));
 	int x,y,rank,hp_limit,maxhp_limit,i,tid,max_hp,hp,n,hpp,kills;
-	bool friendly,friendly_show;
+	bool friendly_show;
 	str name,statemsg,killsmsg;
-	SetHudSize(TRACKER_HUD_WIDTH, TRACKER_HUD_HEIGHT, false);
+	SetHudSize(TRACKER_HUD_WIDTH, TRACKER_HUD_HEIGHT, true);
 	SetFont(DEFAULT_FONT);
 	while(true)
 	{
@@ -542,8 +573,7 @@ script "HPBar_Open-cs" OPEN CLIENTSIDE
 					{
 						max_hp = tracked_max_hps[i];
 						hp = tracked_hps[i];
-						friendly = tracked_friendly[i];
-						if(((max_hp > maxhp_limit) || ((max_hp == maxhp_limit) && (hp > hp_limit))) && (!friendly || friendly_show))
+						if(((max_hp > maxhp_limit) || ((max_hp == maxhp_limit) && (hp > hp_limit))) && (friendly_show || ((tracked_flags[i] & FLAG_FRIENDLY) == 0)))
 						{
 							maxhp_rankings[rank] = i;
 							maxhp_limit = max_hp;
@@ -561,9 +591,12 @@ script "HPBar_Open-cs" OPEN CLIENTSIDE
 						max_hp = tracked_max_hps[n];
 						hpp = percent(hp,max_hp,100,true);
 						statemsg = " ";
-						if(tracked_reflect[n])statemsg = strparam(s:statemsg, s:"\c[x5][REFLECT]\c-");
-						if(tracked_invul[n])statemsg = strparam(s:statemsg, s:"\c[i8][INVUL]\c-");
-						if(tracked_friendly[n])statemsg = strparam(s:statemsg, s:"\c[i7][FRIENDLY]\c-");
+						if(tracked_flags[n] & FLAG_REFLECTIVE)statemsg = strparam(s:statemsg, s:"\c[x5][REFLECT]\c-");
+						if(tracked_flags[n] & FLAG_INVULNERABLE)statemsg = strparam(s:statemsg, s:"\c[i8][INVUL]\c-");
+						if(tracked_flags[n] & FLAG_FRIENDLY)statemsg = strparam(s:statemsg, s:"\c[i7][FRIENDLY]\c-");
+						if(tracked_flags[n] & FLAG_GHOST)statemsg = strparam(s:statemsg, s:"\c[d9][GHOST]\c-");
+						if(tracked_flags[n] & FLAG_INVISIBLE)statemsg = strparam(s:statemsg, s:"\c[d9][INVISIBLE]\c-");
+						if(tracked_flags[n] & FLAG_STEALTH)statemsg = strparam(s:statemsg, s:"\c[d9][STEALTH]\c-");
 						killsmsg = "";
 						if(GetCVar("hpbar_rekt"))
 						{
@@ -600,6 +633,10 @@ script "HPBar_Open-cs" OPEN CLIENTSIDE
 					break;
 				}
 			}
+		}
+		else
+		{
+			delay(35);
 		}
 	}
 }
@@ -670,12 +707,13 @@ script "HPBar_LinebarView" (int p_num, int hp, int max_hp) CLIENTSIDE
 		bool invul = get_actor_invul();
 		bool friendly = CheckFlag(0,"FRIENDLY");
 		bool reflect = CheckFlag(0,"REFLECTIVE");
+		bool ghost = CheckFlag(0,"GHOST");
 		if(!friendly || get_bool_user_cvar("hpbar_show_friendly"))
 		{
 			int style = GetUserCVar(p_num,"hpbar_style");
 			if(style == STYLE_FULL)
 			{
-				show_full_hpbar(hp, max_hp, hp_percentage, get_actor_name(), invul, friendly, reflect);
+				show_full_hpbar(hp, max_hp, hp_percentage, get_actor_name(), invul, friendly, reflect, ghost);
 			}
 			else if(style == STYLE_MINIMAL)
 			{
@@ -702,11 +740,10 @@ script "HPBar_TrackerView" (int force_track)
 			{
 				GiveInventory("MonsterAlreadyTracked",tracked_tids[i]);//Выдать трекномер монстру для отслеживания повторов.
 				tracked_tid = tracked_tids[i];
-				int old_hp,old_kills;
-				bool old_invul,old_reflect,old_friendly;
+				tracked_broadcast[i] = true;
 				str name = HPBarGetActorInfo(i);
 				str name_cvar = strparam(s:"hpbar_tracked_names", d:i);
-				tracked_broadcast[i] = true;
+				int old_hp,old_kills,old_flags;
 				while(ActorIsExists(tracked_tid) && CheckActorClass(tracked_tid,"hpbar-tracker"))
 				{
 					if(SetActivator(tracked_tid) == 1)//переключение на трекер.
@@ -715,28 +752,27 @@ script "HPBar_TrackerView" (int force_track)
 						SetActorProperty(0,APROP_ReactionTime,35);
 						if(tracked_broadcast[i])
 						{
+							// Send monster Max HP
 							ACS_NamedExecuteWithResult("Copy_tracked_tid_and_MaxHP_to_Clientside",i,tracked_tids[i],tracked_max_hps[i]);
 						}
 						if(tracked_broadcast[i] || (old_hp != tracked_hps[i]) || (old_kills != tracked_kills[i]))
 						{
+							// Send monster HP
 							ACS_NamedExecuteWithResult("Copy_HP_and_Kills_to_Clientside",i,tracked_hps[i],tracked_kills[i]);
 						}
-						if(tracked_broadcast[i] || (old_invul != tracked_invul[i]) || (old_reflect != tracked_reflect[i]) || (old_friendly != tracked_friendly[i]))
+						if(tracked_broadcast[i] || (old_flags != tracked_flags[i]))
 						{
-							ACS_NamedExecuteWithResult("Copy_Invul_Reflect_Friendly_to_Clientside",i,tracked_invul[i],tracked_reflect[i],tracked_friendly[i]);
+							// Send monster invul, reflect, friendly
+							ACS_NamedExecuteWithResult("Copy_Invul_Reflect_Friendly_to_Clientside",i,tracked_flags[i]);
 						}
-						if(tracked_broadcast[i] || (!streq(GetCVarString(strparam(s:"hpbar_tracked_names", d:i)),name)))
+						if(tracked_broadcast[i] || (!streq(GetCVarString(name_cvar),name)))
 						{
 							tracked_broadcast[i] = false;
 							SetCVarString(name_cvar,name);
 						}
-						// Send monster HP
 						old_hp = tracked_hps[i];
 						old_kills = tracked_kills[i];
-						// Send monster invul, reflect, friendly
-						old_invul = tracked_invul[i];
-						old_reflect = tracked_reflect[i];
-						old_friendly = tracked_friendly[i];
+						old_flags = tracked_flags[i];
 						delay(1);
 						if(SetActivator(0,AAPTR_TARGET) == 1)//переключение на монстра.
 						{
