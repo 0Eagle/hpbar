@@ -681,7 +681,17 @@ script "HPBar_GetTarget" (void)
 		{
 			int hp = GetActorProperty(0,APROP_Health);
 			int max_hp = GetActorProperty(0,APROP_SpawnHealth);
-			if(max_hp <= 0)max_hp = hp;
+			if(max_hp <= 0)
+			{
+				if(ActorIsPlayer(0))
+				{
+					max_hp = 100;
+				}
+				else
+				{
+					max_hp = hp;
+				}
+			}
 			if(max_hp > 0)
 			{
 				if(max_hp >= GetCVar("hpbar_threshold"))
