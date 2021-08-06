@@ -25,14 +25,14 @@ int MaxClientsCount = 0;
 
 #define MINIMAL_HUD_WIDTH				1280
 #define MINIMAL_HUD_HEIGHT				960
-#define MINIMAL_HOLDTIME				0.03
-#define MINIMAL_FADETIME				0.1
+#define MINIMAL_HOLDTIME				1.0
+#define MINIMAL_FADETIME				0.2
 #define MINIMAL_HP_X					640.0
 #define MINIMAL_HP_Y					500.0
 
 #define TRACKER_HUD_WIDTH				960
 #define TRACKER_HUD_HEIGHT				720
-#define TRACKER_HOLDTIME				0.12
+#define TRACKER_HOLDTIME				0.2
 #define TRACKER_FADETIME				0.1
 
 #define MAX_TRACKERS					33
@@ -40,12 +40,12 @@ int MaxClientsCount = 0;
 
 #define INVALID_TID						0
 
-#define  FLAG_FRIENDLY					1
-#define  FLAG_REFLECTIVE				2
-#define  FLAG_INVULNERABLE				4
-#define  FLAG_GHOST						8
-#define  FLAG_INVISIBLE					16
-#define  FLAG_STEALTH					32
+#define FLAG_FRIENDLY					1
+#define FLAG_REFLECTIVE					2
+#define FLAG_INVULNERABLE				4
+#define FLAG_GHOST						8
+#define FLAG_INVISIBLE					16
+#define FLAG_STEALTH					32
 
 //Шрифт по умолчанию
 #define DEFAULT_FONT					"SMALLFONT"
