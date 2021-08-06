@@ -14,7 +14,7 @@ int MaxClientsCount = 0;
 
 #define FULL_HUD_WIDTH					800
 #define FULL_HUD_HEIGHT					600
-#define FULL_HOLDTIME					0.25
+#define FULL_HOLDTIME					1.0
 #define FULL_FADETIME					0.1
 #define FULL_HPBAR_X					400.0
 #define FULL_HPBAR_Y					40.0
@@ -30,6 +30,8 @@ int MaxClientsCount = 0;
 
 #define TRACKER_HUD_WIDTH				960
 #define TRACKER_HUD_HEIGHT				720
+#define TRACKER_HOLDTIME				0.12
+#define TRACKER_FADETIME				0.1
 
 #define MAX_TRACKERS					33
 #define NUM_RANKINGS					10
@@ -110,6 +112,11 @@ function bool ActorIsExists(int tid)
 function bool IsGameTypeSinglePlayer(void)
 {
 	return (SinglePlayer() || (GameType() == GAME_SINGLE_PLAYER));
+}
+
+function bool IsGameTypeDeathmatch(void)
+{
+	return (GetCVAR("Deathmatch") || GetCVAR("Duel") || GetCVAR("TeamPlay") || (GameType() == GAME_NET_DEATHMATCH));
 }
 
 function int MaxPlayersInGame(void)
@@ -201,7 +208,7 @@ function int GetOrSetMonsterTrackNum(void)
 		if((tracked_tids[i] == INVALID_TID) || (!(ActorIsExists(tracked_tids[i]) && CheckActorClass(tracked_tids[i],"hpbar-tracker"))))
 		{
 			TrackNum = UniqueTID(0,0);
-			SpawnProjectile(0,"hpbar-tracker",GetActorAngle(0)>>8,0,0,0,TrackNum);
+			SpawnProjectile(0,"hpbar-tracker",0,0,0,0,TrackNum);
 			if(ThingCount(T_NONE,TrackNum) == 1)//проверить на наличие совпадающего tid.
 			{
 				tracked_tids[i] = TrackNum;
@@ -231,7 +238,7 @@ function int GetOrSetMonsterTrackNum(void)
 	if(j > 0)
 	{
 		TrackNum = UniqueTID(0,0);
-		SpawnProjectile(0,"hpbar-tracker",GetActorAngle(0)>>8,0,0,0,TrackNum);
+		SpawnProjectile(0,"hpbar-tracker",0,0,0,0,TrackNum);
 		if(ThingCount(T_NONE,TrackNum) == 1)//проверить на наличие совпадающего tid.
 		{
 			tracked_tids[j] = TrackNum;
@@ -255,7 +262,7 @@ function void HPBarLineStateMsg(str statemsg, int ln)
 	HudMessageBold(s:statemsg; HUDMSG_FADEOUT, HUD_TEXT_TARGET_PROP_ID + ln, CR_WHITE, FULL_HPBAR_X, FULL_INFO_Y + to_fixed(ln * 10), FULL_HOLDTIME, FULL_FADETIME);
 }
 
-function void show_full_hpbar(int hp, int max_hp, int hp_percentage, str name, bool invul, bool friendly, bool reflect, bool ghost)
+function void show_full_hpbar(int hp, int max_hp, int hp_percentage, str name, int flags)
 {
 	SetHudSize(FULL_HUD_WIDTH, FULL_HUD_HEIGHT, true);
 	if(hp_percentage > 100)
@@ -270,30 +277,44 @@ function void show_full_hpbar(int hp, int max_hp, int hp_percentage, str name, b
 	{
 		HudMessageBold(s:"A"; HUDMSG_FADEOUT, HUD_LINE_PERCENT_ID + i, CR_UNTRANSLATED, FULL_HPBAR_X - 97.0 + to_fixed(i * 2), FULL_HPBAR_Y, FULL_HOLDTIME, FULL_FADETIME);
 	}
+	for(int j = i; (j <= 100); j++)
+	{
+		HudMessageBold(s:""; HUDMSG_FADEOUT, HUD_LINE_PERCENT_ID + j, CR_UNTRANSLATED, FULL_HPBAR_X - 97.0 + to_fixed(i * 2), FULL_HPBAR_Y, FULL_HOLDTIME, FULL_FADETIME);
+	}
 	SetFont("HPBAR");
 	HudMessageBold(s:"A"; HUDMSG_FADEOUT, HUD_LINE_BAR_ID, CR_UNTRANSLATED, FULL_HPBAR_X, FULL_HPBAR_Y, FULL_HOLDTIME, FULL_FADETIME);
 	SetFont(DEFAULT_FONT);
 	HudMessageBold(d:hp, s:" / ", d:max_hp, s:" (", d:hp_percentage, s:"%)";HUDMSG_FADEOUT, HUD_TEXT_PERCENT_ID, CR_WHITE, FULL_HPBAR_X, FULL_HPBAR_Y, FULL_HOLDTIME, FULL_FADETIME);
 	HudMessageBold(s:name; HUDMSG_FADEOUT, HUD_TEXT_TARGET_NAME_ID, CR_WHITE, FULL_HPBAR_X, FULL_NAME_Y, FULL_HOLDTIME, FULL_FADETIME);
 	int ln = 0;
-	if(reflect)
+	if(flags & FLAG_REFLECTIVE)
 	{
 		HPBarLineStateMsg("\c[x5]Reflective\c-",ln);
 		ln++;
 	}
-	if(invul)
+	if(flags & FLAG_INVULNERABLE)
 	{
 		HPBarLineStateMsg("\c[i8]Invulnerable\c-",ln);
 		ln++;
 	}
-	if(friendly)
+	if(flags & FLAG_FRIENDLY)
 	{
 		HPBarLineStateMsg("\c[i7]Friendly\c-",ln);
 		ln++;
 	}
-	if(ghost)
+	if(flags & FLAG_GHOST)
 	{
 		HPBarLineStateMsg("\c[d9]Ghost\c-",ln);
+		ln++;
+	}
+	if(flags & FLAG_INVISIBLE)
+	{
+		HPBarLineStateMsg("\c[d9]Invisible\c-",ln);
+		ln++;
+	}
+	if(flags & FLAG_STEALTH)
+	{
+		HPBarLineStateMsg("\c[d9]Stealth\c-",ln);
 		ln++;
 	}
 }
@@ -555,7 +576,7 @@ script "HPBar_Open-cs" OPEN CLIENTSIDE
 	SetFont(DEFAULT_FONT);
 	while(true)
 	{
-		delay(1);
+		delay(2);
 		if(GetCVar("hpbar_tracker"))
 		{
 			x = to_int((GetCVar("hpbar_tracker_x") - 0.5) * GetScreenWidth() / GetScreenHeight() * TRACKER_HUD_HEIGHT) + (TRACKER_HUD_WIDTH / 2);
@@ -618,13 +639,13 @@ script "HPBar_Open-cs" OPEN CLIENTSIDE
 								killsmsg = " \cm(1 rekt)\c-";
 							}
 						}
-						HudMessage(s:hpp_to_color(hpp), d:hp, s:"/", d:max_hp, s:"\c-";HUDMSG_FADEOUT, HUD_TEXT_TRACKER_NAME_ID + rank, CR_WHITE, hpbar_align_right(x + 80), y + rank * 12.0, MINIMAL_HOLDTIME, MINIMAL_FADETIME);
-						HudMessage(s:hpp_to_color(hpp), d:hpp, s:"%\c-";HUDMSG_FADEOUT, HUD_TEXT_TRACKER_NAME_ID + NUM_RANKINGS + rank, CR_WHITE, hpbar_align_right(x + 120), y + rank * 12.0, MINIMAL_HOLDTIME, MINIMAL_FADETIME);
-						HudMessage(s:name, s:killsmsg, s:statemsg;HUDMSG_FADEOUT, HUD_TEXT_TRACKER_NAME_ID + NUM_RANKINGS * 2 + rank, CR_WHITE, hpbar_align_left(x + 132), y + rank * 12.0, MINIMAL_HOLDTIME, MINIMAL_FADETIME);
+						HudMessage(s:hpp_to_color(hpp), d:hp, s:"/", d:max_hp, s:"\c-";HUDMSG_FADEOUT, HUD_TEXT_TRACKER_NAME_ID + rank, CR_WHITE, hpbar_align_right(x + 80), y + rank * 12.0, TRACKER_HOLDTIME, TRACKER_FADETIME);
+						HudMessage(s:hpp_to_color(hpp), d:hpp, s:"%\c-";HUDMSG_FADEOUT, HUD_TEXT_TRACKER_NAME_ID + NUM_RANKINGS + rank, CR_WHITE, hpbar_align_right(x + 120), y + rank * 12.0, TRACKER_HOLDTIME, TRACKER_FADETIME);
+						HudMessage(s:name, s:killsmsg, s:statemsg;HUDMSG_FADEOUT, HUD_TEXT_TRACKER_NAME_ID + NUM_RANKINGS * 2 + rank, CR_WHITE, hpbar_align_left(x + 132), y + rank * 12.0, TRACKER_HOLDTIME, TRACKER_FADETIME);
 					}
 					else
 					{
-						tracked_hps[n] = INVALID_TID;
+						tracked_tids[n] = INVALID_TID;
 						break;
 					}
 				}
@@ -713,17 +734,14 @@ script "HPBar_LinebarView" (int p_num, int hp, int max_hp) CLIENTSIDE
 {
 	if(ConsolePlayerNumber() == p_num)
 	{
-		int hp_percentage = percent(hp,max_hp,100,true);
-		bool invul = get_actor_invul();
-		bool friendly = CheckFlag(0,"FRIENDLY");
-		bool reflect = CheckFlag(0,"REFLECTIVE");
-		bool ghost = CheckFlag(0,"GHOST");
-		if(!friendly || get_bool_user_cvar("hpbar_show_friendly"))
+		int flags = (get_actor_invis() * FLAG_INVISIBLE) + (get_actor_invul() * FLAG_INVULNERABLE) + (CheckFlag(0,"REFLECTIVE") * FLAG_REFLECTIVE) + (CheckFlag(0,"FRIENDLY") * FLAG_FRIENDLY) + (CheckFlag(0,"GHOST") * FLAG_GHOST) + (CheckFlag(0,"STEALTH") * FLAG_STEALTH);
+		if(((flags & FLAG_FRIENDLY) == 0) || get_bool_user_cvar("hpbar_show_friendly"))
 		{
+			int hp_percentage = percent(hp,max_hp,100,true);
 			int style = GetUserCVar(p_num,"hpbar_style");
 			if(style == STYLE_FULL)
 			{
-				show_full_hpbar(hp, max_hp, hp_percentage, get_actor_name(), invul, friendly, reflect, ghost);
+				show_full_hpbar(hp, max_hp, hp_percentage, get_actor_name(), flags);
 			}
 			else if(style == STYLE_MINIMAL)
 			{
@@ -738,7 +756,7 @@ script "HPBar_TrackerView" (int force_track)
 {
 	// We only track monsters. :)
 	int tracked_tid = CheckInventory("MonsterAlreadyTracked");
-	if(ActorIsMonster(0) && (GetActorProperty(0,APROP_SpawnHealth) > 0) && ((tracked_tid < 1) || !(ActorIsExists(tracked_tid) && CheckActorClass(tracked_tid,"hpbar-tracker"))))
+	if((ActorIsMonster(0) || (ActorIsPlayer(0) && IsGameTypeDeathmatch())) && (GetActorProperty(0,APROP_SpawnHealth) > 0) && ((tracked_tid < 1) || !(ActorIsExists(tracked_tid) && CheckActorClass(tracked_tid,"hpbar-tracker"))))
 	{
 		// Should we track it?
 		if((force_track == 1) || should_track())
