@@ -15,9 +15,11 @@ int MaxClientsCount = 0;
 #define FULL_HUD_WIDTH					800
 #define FULL_HUD_HEIGHT					600
 #define FULL_HOLDTIME					1.0
-#define FULL_FADETIME					0.1
+#define FULL_FADETIME					0.2
 #define FULL_HPBAR_X					400.0
 #define FULL_HPBAR_Y					40.0
+#define FULL_HPBAR_X_OFFSET				5.0
+#define FULL_HPBAR_Y_OFFSET				0.0
 #define FULL_NAME_Y						(FULL_HPBAR_Y + 25.0)
 #define FULL_INFO_Y						(FULL_NAME_Y + 12.0)
 
@@ -273,14 +275,9 @@ function void show_full_hpbar(int hp, int max_hp, int hp_percentage, str name, i
 	{
 		SetFont(StrParam(s:"FILL",i:hp_percentage/10));
 	}
-	for(int i = 0; (i <= 100) && (i <= hp_percentage); i++)
-	{
-		HudMessageBold(s:"A"; HUDMSG_FADEOUT, HUD_LINE_PERCENT_ID + i, CR_UNTRANSLATED, FULL_HPBAR_X - 97.0 + to_fixed(i * 2), FULL_HPBAR_Y, FULL_HOLDTIME, FULL_FADETIME);
-	}
-	for(int j = i; (j <= 100); j++)
-	{
-		HudMessageBold(s:""; HUDMSG_FADEOUT, HUD_LINE_PERCENT_ID + j, CR_UNTRANSLATED, FULL_HPBAR_X - 97.0 + to_fixed(i * 2), FULL_HPBAR_Y, FULL_HOLDTIME, FULL_FADETIME);
-	}
+	SetHudClipRect(to_int(FULL_HPBAR_X+FULL_HPBAR_X_OFFSET-100.0),to_int(FULL_HPBAR_Y+FULL_HPBAR_Y_OFFSET-9.0),hp_percentage*2,18,200);
+	HudMessageBold(s:"A"; HUDMSG_FADEOUT,HUD_LINE_PERCENT_ID,CR_UNTRANSLATED,FULL_HPBAR_X+FULL_HPBAR_X_OFFSET,FULL_HPBAR_Y+FULL_HPBAR_Y_OFFSET,FULL_HOLDTIME,FULL_FADETIME);
+	SetHudClipRect(0,0,0,0,0);
 	SetFont("HPBAR");
 	HudMessageBold(s:"A"; HUDMSG_FADEOUT, HUD_LINE_BAR_ID, CR_UNTRANSLATED, FULL_HPBAR_X, FULL_HPBAR_Y, FULL_HOLDTIME, FULL_FADETIME);
 	SetFont(DEFAULT_FONT);
