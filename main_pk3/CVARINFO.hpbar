@@ -4,7 +4,7 @@ user	noarchive bool hpbar_announcer = true;
 server	noarchive bool hpbar_rekt = true;
 server	noarchive int hpbar_threshold = 0;
 server	noarchive bool hpbar_tracker = true;
-server	noarchive int hpbar_tracker_threshold = 2000;
+server	noarchive int hpbar_tracker_threshold = 0;
 server	noarchive float hpbar_tracker_x = 0.02;
 server	noarchive float hpbar_tracker_y = 0.58;
 //==============================================================================
