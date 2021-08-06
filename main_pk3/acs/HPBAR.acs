@@ -569,15 +569,18 @@ script "HPBar_Open-cs" OPEN CLIENTSIDE
 	int x,y,rank,hp_limit,maxhp_limit,i,tid,max_hp,hp,n,hpp,kills;
 	bool friendly_show;
 	str name,statemsg,killsmsg;
+	int hpbar_tracker_x_ = GetCVar("hpbar_tracker_x");
+	int hpbar_tracker_y_ = GetCVar("hpbar_tracker_y");
+	bool hpbar_tracker_ = GetCVar("hpbar_tracker");
 	SetHudSize(TRACKER_HUD_WIDTH, TRACKER_HUD_HEIGHT, true);
 	SetFont(DEFAULT_FONT);
 	while(true)
 	{
-		delay(2);
-		if(GetCVar("hpbar_tracker"))
+		delay(3);
+		if(hpbar_tracker_)
 		{
-			x = to_int((GetCVar("hpbar_tracker_x") - 0.5) * GetScreenWidth() / GetScreenHeight() * TRACKER_HUD_HEIGHT) + (TRACKER_HUD_WIDTH / 2);
-			y = to_fixed(to_int((GetCVar("hpbar_tracker_y") - 0.5) * GetScreenHeight()) + (TRACKER_HUD_HEIGHT / 2));
+			x = to_int((hpbar_tracker_x_ - 0.5) * GetScreenWidth() / GetScreenHeight() * TRACKER_HUD_HEIGHT) + (TRACKER_HUD_WIDTH / 2);
+			y = to_fixed(to_int((hpbar_tracker_y_ - 0.5) * GetScreenHeight()) + (TRACKER_HUD_HEIGHT / 2));
 			friendly_show = get_bool_user_cvar("hpbar_show_friendly");
 			for(rank = 0; rank < NUM_RANKINGS; rank++)
 			{
@@ -655,6 +658,7 @@ script "HPBar_Open-cs" OPEN CLIENTSIDE
 		else
 		{
 			delay(35);
+			hpbar_tracker_ = GetCVar("hpbar_tracker");
 		}
 	}
 }
