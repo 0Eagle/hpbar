@@ -16,6 +16,7 @@ int MaxClientsCount = 0;
 #define FULL_HUD_HEIGHT					600
 #define FULL_HOLDTIME					1.0
 #define FULL_FADETIME					0.2
+#define FULL_FADETIME_SECOND			0.025
 #define FULL_HPBAR_X					400.0
 #define FULL_HPBAR_Y					40.0
 #define FULL_HPBAR_X_OFFSET				5.0
@@ -259,14 +260,8 @@ function str hpp_to_color(int p)
 	return "\c[x5]";
 }
 
-function void HPBarLineStateMsg(str statemsg, int ln)
+function void set_linespritename(int hp_percentage, int hp, int max_hp)
 {
-	HudMessageBold(s:statemsg; HUDMSG_FADEOUT, HUD_TEXT_TARGET_PROP_ID + ln, CR_WHITE, FULL_HPBAR_X, FULL_INFO_Y + to_fixed(ln * 10), FULL_HOLDTIME, FULL_FADETIME);
-}
-
-function void show_full_hpbar(int hp, int max_hp, int hp_percentage, str name, int flags)
-{
-	SetHudSize(FULL_HUD_WIDTH, FULL_HUD_HEIGHT, true);
 	if(hp_percentage > 100)
 	{
 		SetFont(StrParam(s:"FILL",i:percent(hp,max_hp,14,false)));
@@ -275,9 +270,22 @@ function void show_full_hpbar(int hp, int max_hp, int hp_percentage, str name, i
 	{
 		SetFont(StrParam(s:"FILL",i:hp_percentage/10));
 	}
+}
+
+function void draw_line_hpbar(int hp_percentage, int i, int fadetime)
+{
 	SetHudClipRect(to_int(FULL_HPBAR_X+FULL_HPBAR_X_OFFSET-100.0),to_int(FULL_HPBAR_Y+FULL_HPBAR_Y_OFFSET-9.0),hp_percentage*2,18,200);
-	HudMessageBold(s:"A"; HUDMSG_FADEOUT,HUD_LINE_PERCENT_ID,CR_UNTRANSLATED,FULL_HPBAR_X+FULL_HPBAR_X_OFFSET,FULL_HPBAR_Y+FULL_HPBAR_Y_OFFSET,FULL_HOLDTIME,FULL_FADETIME);
+	HudMessageBold(s:"A"; HUDMSG_FADEOUT,HUD_LINE_PERCENT_ID+i,CR_UNTRANSLATED,FULL_HPBAR_X+FULL_HPBAR_X_OFFSET,FULL_HPBAR_Y+FULL_HPBAR_Y_OFFSET,FULL_HOLDTIME,fadetime);
 	SetHudClipRect(0,0,0,0,0);
+}
+
+function void HPBarLineStateMsg(str statemsg, int ln)
+{
+	HudMessageBold(s:statemsg; HUDMSG_FADEOUT, HUD_TEXT_TARGET_PROP_ID + ln, CR_WHITE, FULL_HPBAR_X, FULL_INFO_Y + to_fixed(ln * 10), FULL_HOLDTIME, FULL_FADETIME);
+}
+
+function void show_full_hpbar(int hp, int max_hp, int hp_percentage, str name, int flags)
+{
 	SetFont("HPBAR");
 	HudMessageBold(s:"A"; HUDMSG_FADEOUT,HUD_LINE_BAR_ID,CR_UNTRANSLATED,FULL_HPBAR_X,FULL_HPBAR_Y,FULL_HOLDTIME,FULL_FADETIME);
 	SetFont(DEFAULT_FONT);
@@ -742,7 +750,12 @@ script "HPBar_LinebarView" (int p_num, int hp, int max_hp) CLIENTSIDE
 			int style = GetUserCVar(p_num,"hpbar_style");
 			if(style == STYLE_FULL)
 			{
+				SetHudSize(FULL_HUD_WIDTH, FULL_HUD_HEIGHT, true);
 				show_full_hpbar(hp, max_hp, hp_percentage, get_actor_name(), flags);
+				set_linespritename(hp_percentage,hp,max_hp);
+				draw_line_hpbar(hp_percentage, 0, FULL_FADETIME);
+				delay(3);
+				draw_line_hpbar(hp_percentage, 1, FULL_FADETIME_SECOND);
 			}
 			else if(style == STYLE_MINIMAL)
 			{
