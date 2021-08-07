@@ -931,35 +931,32 @@ script "HPBar_ShowScore" (int score, int score_temp)
 	if(ActorIsMonster(0) && (GetActorProperty(0,APROP_SpawnHealth) > 0))
 	{
 		str name = get_actor_name();
-		if(score_temp == 2)
+		Switch(score_temp)
 		{
-			announce(100+score_temp,"hpbar/doublekill","\c[d4]DOUBLE KILL\c-",name,"2 consecutive kills");
+			case 2:
+				announce(100+score_temp,"hpbar/doublekill","\c[d4]DOUBLE KILL\c-",name,"2 consecutive kills");
+				break;
+			case 3:
+				announce(100+score_temp,"hpbar/multikill","\c[d4]MULTI KILL\c-",name,"3 consecutive kills");
+				break;
+			case 4:
+				announce(100+score_temp,"hpbar/megakill","\c[d4]MEGA KILL\c-",name,"4 consecutive kills");
+				break;
+			case 5:
+				announce(100+score_temp,"hpbar/ultrakill","\c[d4]ULTRA KILL\c-",name,"5 consecutive kills");
+				break;
+			case 6:
+				announce(100+score_temp,"hpbar/monsterkill","\c[d4]M-M-MONSTER KILL!\c-",name,"6 consecutive kills");
+				break;
+			case 7:
+				announce(100+score_temp,"hpbar/ludicrouskill","\c[d4]L U D I C R O U S  K I L L !\c-",name,"7 consecutive kills");
+				break;
+			case 8:
+			case 9:
+				announce(100+score_temp,"hpbar/holyshit","\c[m6]! ! ! H O L Y  S H I T ! ! !\c-",name,strparam(d:score_temp,s:" consecutive kills"));
+				break;
 		}
-		else if(score_temp == 3)
-		{
-			announce(100+score_temp,"hpbar/multikill","\c[d4]MULTI KILL\c-",name,"3 consecutive kills");
-		}
-		else if(score_temp == 4)
-		{
-			announce(100+score_temp,"hpbar/megakill","\c[d4]MEGA KILL\c-",name,"4 consecutive kills");
-		}
-		else if(score_temp == 5)
-		{
-			announce(100+score_temp,"hpbar/ultrakill","\c[d4]ULTRA KILL\c-",name,"5 consecutive kills");
-		}
-		else if(score_temp == 6)
-		{
-			announce(100+score_temp,"hpbar/monsterkill","\c[d4]M-M-MONSTER KILL!\c-",name,"6 consecutive kills");
-		}
-		else if(score_temp == 7)
-		{
-			announce(100+score_temp,"hpbar/ludicrouskill","\c[d4]L U D I C R O U S  K I L L !\c-",name,"7 consecutive kills");
-		}
-		else if((score_temp == 8) || (score_temp == 9))
-		{
-			announce(100+score_temp,"hpbar/holyshit","\c[m6]! ! ! H O L Y  S H I T ! ! !\c-",name,strparam(d:score_temp,s:" consecutive kills"));
-		}
-		else if(score_temp >= 10)
+		if(score_temp >= 10)
 		{
 			announce(100+score_temp,"hpbar/sexyholyshit","\c[m6]! ! ! H O L Y  S H I T ! ! !\c-",name,strparam(d:score_temp,s:" consecutive kills"));
 		}
