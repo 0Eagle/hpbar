@@ -1,0 +1,63 @@
+[enu default]
+HPBAR_LINE_REFLECT = "\c[x5]Reflective\c-";
+HPBAR_LINE_INVUL = "\c[i8]Invulnerable\c-";
+HPBAR_LINE_FRIEND = "\c[i7]Friendly\c-";
+HPBAR_LINE_GHOST = "\c[d9]Ghost\c-";
+HPBAR_LINE_INVIS = "\c[d9]Invisible\c-";
+HPBAR_LINE_STEALTH = "\c[d9]Stealth\c-";
+
+HPBAR_TRACKER_REFLECT = "\c[x5][REFLECT]\c-";
+HPBAR_TRACKER_INVUL = "\c[i8][INVUL]\c-";
+HPBAR_TRACKER_FRIEND = "\c[i7][FRIENDLY]\c-";
+HPBAR_TRACKER_GHOST = "\c[d9][GHOST]\c-";
+HPBAR_TRACKER_INVIS = "\c[d9][INVISIBLE]\c-";
+HPBAR_TRACKER_STEALTH = "\c[d9][STEALTH]\c-";
+
+HPBAR_TRACKER_10REKT_S = " \c[a6](";
+HPBAR_TRACKER_10REKT_E = " rekts)\c-";
+HPBAR_TRACKER_5REKT_S = " \cg(";
+HPBAR_TRACKER_5REKT_E = " rekts)\c-";
+HPBAR_TRACKER_2REKT_S = " \cr(";
+HPBAR_TRACKER_2REKT_E = " rekts)\c-";
+HPBAR_TRACKER_1REKT_S = " \cm(";
+HPBAR_TRACKER_1REKT_E = " rekt)\c-";
+
+HPBAR_ANNOUNCE_GENDER_0 = "Killed himself";
+HPBAR_ANNOUNCE_GENDER_1 = "Killed herself";
+HPBAR_ANNOUNCE_GENDER_OTHER = "Killed itself";
+
+HPBAR_ANNOUNCE_SUICIDE = "\c[d4]FIRST DUMB\c-";
+HPBAR_ANNOUNCE_VICTIM = "\c[d4]FIRST BLOOD\c-";
+HPBAR_ANNOUNCE_VICTIM_E = "First kill on the map";
+
+HPBAR_SCORE_2KILL = "\c[d4]DOUBLE KILL\c-";
+HPBAR_SCORE_2KILL_E = "2 consecutive kills";
+HPBAR_SCORE_3KILL = "\c[d4]MULTI KILL\c-";
+HPBAR_SCORE_3KILL_E = "3 consecutive kills";
+HPBAR_SCORE_4KILL = "\c[d4]MEGA KILL\c-";
+HPBAR_SCORE_4KILL_E = "4 consecutive kills";
+HPBAR_SCORE_5KILL = "\c[d4]ULTRA KILL\c-";
+HPBAR_SCORE_5KILL_E = "5 consecutive kills";
+HPBAR_SCORE_6KILL = "\c[d4]M-M-MONSTER KILL!\c-";
+HPBAR_SCORE_6KILL_E = "6 consecutive kills";
+HPBAR_SCORE_7KILL = "\c[d4]L U D I C R O U S  K I L L !\c-";
+HPBAR_SCORE_7KILL_E = "7 consecutive kills";
+HPBAR_SCORE_8KILL = "\c[m6]! ! ! H O L Y  S H I T ! ! !\c-";
+HPBAR_SCORE_8KILL_E = " consecutive kills";
+HPBAR_SCORE_9KILL = "\c[m6]! ! ! H O L Y  S H I T ! ! !\c-";
+HPBAR_SCORE_9KILL_E = " consecutive kills";
+HPBAR_SCORE_10KILL = "\c[m6]! ! ! H O L Y  S H I T ! ! !\c-";
+HPBAR_SCORE_10KILL_E = " consecutive kills";
+
+HPBAR_SCORE_LEVEL1 = "\c[l5]KILLING SPREE\c-";
+HPBAR_SCORE_LEVEL1_E = "3 total kills";
+HPBAR_SCORE_LEVEL2 = "\c[l5]RAMPAGE\c-";
+HPBAR_SCORE_LEVEL2_E = "5 total kills";
+HPBAR_SCORE_LEVEL3 = "\c[d4]DOMINATING\c-";
+HPBAR_SCORE_LEVEL3_E = "8 total kills";
+HPBAR_SCORE_LEVEL4 = "\c[k9]UNSTOPPABLE\c-";
+HPBAR_SCORE_LEVEL4_E = "10 total kills";
+HPBAR_SCORE_LEVEL5 = "\c[k9]G O D L I K E !\c-";
+HPBAR_SCORE_LEVEL5_E = "15 total kills";
+HPBAR_SCORE_LEVEL6 = "\c[n3]W I C K E D  S I C K !\c-";
+HPBAR_SCORE_LEVEL6_E = "25 total kills";
