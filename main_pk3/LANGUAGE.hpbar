@@ -43,9 +43,9 @@ HPBAR_SCORE_6KILL_E = "6 consecutive kills";
 HPBAR_SCORE_7KILL = "\c[d4]L U D I C R O U S  K I L L !\c-";
 HPBAR_SCORE_7KILL_E = "7 consecutive kills";
 HPBAR_SCORE_8KILL = "\c[m6]! ! ! H O L Y  S H I T ! ! !\c-";
-HPBAR_SCORE_8KILL_E = " consecutive kills";
+HPBAR_SCORE_8KILL_E = "8 consecutive kills";
 HPBAR_SCORE_9KILL = "\c[m6]! ! ! H O L Y  S H I T ! ! !\c-";
-HPBAR_SCORE_9KILL_E = " consecutive kills";
+HPBAR_SCORE_9KILL_E = "9 consecutive kills";
 HPBAR_SCORE_10KILL = "\c[m6]! ! ! H O L Y  S H I T ! ! !\c-";
 HPBAR_SCORE_10KILL_E = " consecutive kills";
 
