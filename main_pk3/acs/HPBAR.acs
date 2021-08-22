@@ -260,14 +260,6 @@ function int HPBarSetTid(void)
 	return tid;
 }
 
-function void clear_tracklist(void)
-{
-	for(int i = 0; i < MAX_TRACKERS; i++)
-	{
-		HPBarResetActorInfo(i);
-	}
-}
-
 function int GetOrSetMonsterTrackNum(void)
 {
 	int TrackNum,i,j;
@@ -414,6 +406,23 @@ function void announce(int priority, str sound, str bigtext, str smalltext, str 
 	}
 }
 
+function int get_max_hp(void)
+{
+	int max_hp = GetActorProperty(0,APROP_SpawnHealth);
+	if(max_hp <= 0)
+	{
+		if(ActorIsPlayer(0))
+		{
+			max_hp = 100;
+		}
+		else
+		{
+			max_hp = 0;
+		}
+	}
+	return max_hp;
+}
+
 function bool streq(str x, str y)
 {
 	return (StrICmp(x,y) == 0);
@@ -483,17 +492,21 @@ function str get_actor_name(void)
 		return StrParam(n:0);
 	}
 	str class = GetActorClass(0);
-	str name = GetCVarString(StrParam(s:"hpbar_name_", s:class));
-	if(name != 0)
+	str classtag = GetActorProperty(0,APROP_NameTag);
+	if(streq(class,classtag))
 	{
-		return ccunescape(name);
+		str name = GetCVarString(StrParam(s:"hpbar_name_", s:class));
+		if(name != 0)
+		{
+			return ccunescape(name);
+		}
+		str mname = GetCVarString(StrParam(s:"hpbar_name_", s:normalize_class(class)));
+		if(mname != 0)
+		{
+			return ccunescape(mname);
+		}
 	}
-	str mname = GetCVarString(StrParam(s:"hpbar_name_", s:normalize_class(class)));
-	if(mname != 0)
-	{
-		return ccunescape(mname);
-	}
-	return ccunescape(GetActorProperty(0,APROP_NameTag));
+	return ccunescape(classtag);
 }
 
 function bool should_track(void)
@@ -521,7 +534,7 @@ function bool should_track(void)
 	{
 		return true;
 	}
-	return (GetActorProperty(0,APROP_SpawnHealth) >= GetCVar("hpbar_tracker_threshold"));
+	return (get_max_hp() >= GetCVar("hpbar_tracker_threshold"));
 }
 
 function bool get_actor_invul(void)
@@ -557,7 +570,7 @@ function str HPBarGetActorInfo(int i)
 	{
 		tracked_counter[i] = 0;
 		tracked_hps[i] = GetActorProperty(0,APROP_Health);
-		tracked_max_hps[i] = GetActorProperty(0,APROP_SpawnHealth);
+		tracked_max_hps[i] = get_max_hp();
 		tracked_kills[i] = CheckInventory("MonsterScore");
 		tracked_flags[i] = get_flags();
 		tracked_name[i] = get_actor_name();
@@ -573,6 +586,14 @@ function void HPBarResetActorInfo(int i)
 	tracked_flags[i] = 0;
 	tracked_counter[i] = 0;
 	SetCVarString(StrParam(s:"hpbar_tracked_names", d:i),"");
+}
+
+function void clear_tracklist(void)
+{
+	for(int i = 0; i < MAX_TRACKERS; i++)
+	{
+		HPBarResetActorInfo(i);
+	}
 }
 //==============================================================================
 script "Copy_tracked_tid_and_MaxHP_to_Clientside" (int i, int tid, int max_hps) CLIENTSIDE
@@ -760,13 +781,19 @@ script "HPBar_HitTarget" (void)
 	{
 		SetThingSpecial(0,ACS_NamedExecuteAlways,"HPBar_Rect",0,p_num);
 	}
-	while(PlayerIsSpectator(p_num) == 0)
+	while(PlayerInGame(p_num) && ActorIsAlive(0))
 	{
-		if(ActorIsAlive(0))LineAttack(0,GetActorAngle(0),GetActorPitch(0),0,"hpbar-testing-puff","None",8192.0,FHF_NORANDOMPUFFZ|FHF_NOIMPACTDECAL,0);
-		else break;
-		delay(1);
-		if(ActorIsAlive(0))LineAttack(0,GetActorAngle(0),GetActorPitch(0),0,"hpbar-testing-thru-puff","None",8192.0,FHF_NORANDOMPUFFZ|FHF_NOIMPACTDECAL,0);
-		else break;
+		while(PlayerInGame(p_num) && ActorIsAlive(0) && ((CheckPlayerCamera(p_num) == -1) || (CheckPlayerCamera(p_num) == ActivatorTID())))
+		{
+			LineAttack(0,GetActorAngle(0),GetActorPitch(0),0,"hpbar-testing-puff","None",8192.0,FHF_NORANDOMPUFFZ|FHF_NOIMPACTDECAL,0);
+			delay(1);
+			LineAttack(0,GetActorAngle(0),GetActorPitch(0),0,"hpbar-testing-thru-puff","None",8192.0,FHF_NORANDOMPUFFZ|FHF_NOIMPACTDECAL,0);
+			delay(1);
+		}
+		while(PlayerInGame(p_num) && ActorIsAlive(0) && !((CheckPlayerCamera(p_num) == -1) || (CheckPlayerCamera(p_num) == ActivatorTID())))
+		{
+			delay(2);
+		}
 		delay(1);
 	}
 }
@@ -777,31 +804,25 @@ script "HPBar_GetTarget" (void)
 	if(SetActivator(0,AAPTR_TARGET) == 1)
 	{
 		int p_num = PlayerNumber();
+		if((p_num < 0) && (SetActivator(0,AAPTR_MASTER) == 1))
+		{
+			p_num = PlayerNumber();
+		}
 		if((p_num >= 0) && (SetActivator(PuffTID,AAPTR_TRACER) == 1) && ActorIsAlive(0))
 		{
-			int hp = GetActorProperty(0,APROP_Health);
-			int max_hp = GetActorProperty(0,APROP_SpawnHealth);
-			if(max_hp <= 0)
-			{
-				if(ActorIsPlayer(0))
-				{
-					max_hp = 100;
-				}
-				else
-				{
-					max_hp = hp;
-				}
-			}
+			int max_hp = get_max_hp();
 			if(max_hp > 0)
 			{
-				if(max_hp >= GetCVar("hpbar_threshold"))
-				{
-					ACS_NamedExecuteAlways("HPBar_LinebarView",0,p_num,hp,max_hp);
-				}
 				if(GetCVar("hpbar_tracker") && (CheckInventory("hpbar-tracker-cooldown") < 1))
 				{
 					GiveInventory("hpbar-tracker-cooldown",1);
 					ACS_NamedExecuteAlways("HPBar_TrackerView",0,0);
+				}
+				if(max_hp >= GetCVar("hpbar_threshold"))
+				{
+					int flags = get_flags();
+					int hp = GetActorProperty(0,APROP_Health);
+					ACS_NamedExecuteWithResult("HPBar_LinebarView", p_num, hp, max_hp, flags);
 				}
 			}
 		}
@@ -809,11 +830,10 @@ script "HPBar_GetTarget" (void)
 }
 
 //Скрипт выпоняется от имени цели (монстра).
-script "HPBar_LinebarView" (int p_num, int hp, int max_hp) CLIENTSIDE
+script "HPBar_LinebarView" (int p_num, int hp, int max_hp, int flags) CLIENTSIDE
 {
 	if(ConsolePlayerNumber() == p_num)
 	{
-		int flags = get_flags();
 		if(((flags & FLAG_FRIENDLY) == 0) || get_bool_user_cvar("hpbar_show_friendly"))
 		{
 			int hp_percentage = percent(hp,max_hp,100,true);
@@ -838,9 +858,8 @@ script "HPBar_LinebarView" (int p_num, int hp, int max_hp) CLIENTSIDE
 //Отслеживание монстра попавшего в прицел, цикл проверки работает пока он жив.
 script "HPBar_TrackerView" (int force_track)
 {
-	// We only track monsters. :)
 	int tracked_tid = CheckInventory("MonsterAlreadyTracked");
-	if((ActorIsMonster(0) || (ActorIsPlayer(0) && IsGameTypeDeathmatch())) && (GetActorProperty(0,APROP_SpawnHealth) > 0) && ((tracked_tid < 1) || !(ActorIsExists(tracked_tid) && CheckActorClass(tracked_tid,"hpbar-tracker"))))
+	if((ActorIsMonster(0) || (ActorIsPlayer(0) && IsGameTypeDeathmatch())) && ((tracked_tid < 1) || !(ActorIsExists(tracked_tid) && CheckActorClass(tracked_tid,"hpbar-tracker"))))
 	{
 		// Should we track it?
 		if((force_track == 1) || should_track())
@@ -998,7 +1017,7 @@ script "HPBar_Rect" (int p_num)
 
 script "HPBar_ShowScore" (int score, int score_temp)
 {
-	if(ActorIsMonster(0) && (GetActorProperty(0,APROP_SpawnHealth) > 0))
+	if(ActorIsMonster(0) && (get_max_hp() > 0))
 	{
 		str name = get_actor_name();
 		Switch(score_temp)
