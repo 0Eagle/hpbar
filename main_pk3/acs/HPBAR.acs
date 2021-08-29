@@ -477,8 +477,9 @@ function str normalize_class_impl(str s, int n)
 function str normalize_class(str s)
 {
 	str nclass = normalize_class_impl(s,0);
-	str mclass = GetCVarString(StrParam(s:"hpbar_map_", s:nclass));
-	if(mclass != 0)
+	str lname = StrParam(s:"hpbar_map_", s:nclass);
+	str mclass =  StrParam(l:lname);
+	if(!streq(mclass,lname))
 	{
 		return mclass;
 	}
@@ -495,15 +496,17 @@ function str get_actor_name(void)
 	str classtag = GetActorProperty(0,APROP_NameTag);
 	if(streq(class,classtag))
 	{
-		str name = GetCVarString(StrParam(s:"hpbar_name_", s:class));
-		if(name != 0)
+		str lname = StrParam(s:"hpbar_name_", s:class);
+		str name = StrParam(l:lname);
+		if(!streq(name,lname))
 		{
 			return ccunescape(name);
 		}
-		str mname = GetCVarString(StrParam(s:"hpbar_name_", s:normalize_class(class)));
-		if(mname != 0)
+		lname = StrParam(s:"hpbar_name_", s:normalize_class(class));
+		name = StrParam(l:lname);
+		if(!streq(name,lname))
 		{
-			return ccunescape(mname);
+			return ccunescape(name);
 		}
 	}
 	return ccunescape(classtag);
@@ -512,21 +515,21 @@ function str get_actor_name(void)
 function bool should_track(void)
 {
 	str class = GetActorClass(0);
-	int boss = GetCVar(StrParam(s:"hpbar_track_", s:class));
-	if(boss == 1)
+	int boss = StrParam(l:StrParam(s:"hpbar_track_", s:class));
+	if(streq(boss,"1"))
 	{
 		return true;
 	}
-	else if(boss == -1)
+	else if(streq(boss,"-1"))
 	{
 		return false;
 	}
-	boss = GetCVar(StrParam(s:"hpbar_track_", s:normalize_class(class)));
-	if(boss == 1)
+	boss = StrParam(l:StrParam(s:"hpbar_track_", s:normalize_class(class)));
+	if(streq(boss,"1"))
 	{
 		return true;
 	}
-	else if(boss == -1)
+	else if(streq(boss,"-1"))
 	{
 		return false;
 	}

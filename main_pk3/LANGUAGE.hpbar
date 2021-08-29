@@ -61,3 +61,416 @@ HPBAR_SCORE_LEVEL5 = "\c[k9]G O D L I K E !\c-";
 HPBAR_SCORE_LEVEL5_E = "15 total kills";
 HPBAR_SCORE_LEVEL6 = "\c[n3]W I C K E D  S I C K !\c-";
 HPBAR_SCORE_LEVEL6_E = "25 total kills";
+//==============================================================================
+// Display name mappings
+//==============================================================================
+// Doom
+hpbar_name_ZombieMan = "Former Human";
+hpbar_name_ShotgunGuy = "Former Human Sergeant";
+hpbar_name_DoomImp = "Imp";
+hpbar_name_Demon = "Demon";
+hpbar_name_Spectre = "Spectre";
+hpbar_name_LostSoul = "Lost Soul";
+hpbar_name_Cacodemon = "Cacodemon";
+hpbar_name_BaronOfHell = "Baron Of Hell";
+hpbar_name_Cyberdemon = "\cgCyberdemon\c-";
+hpbar_name_SpiderMastermind = "\cgSpider Mastermind\c-";
+
+// Doom2
+hpbar_name_ChaingunGuy = "Heavy Weapon Dude";
+hpbar_name_HellKnight = "Hell Knight";
+hpbar_name_Revenant = "Revenant";
+hpbar_name_Fatso = "Mancubus";
+hpbar_name_Arachnotron = "Arachnotron";
+hpbar_name_PainElemental = "Pain Elemental";
+hpbar_name_Archvile = "Arch-vile";
+hpbar_name_WolfensteinSS = "Wolfenstein SS";
+hpbar_name_CommanderKeen = "Commander Keen";
+hpbar_name_BossBrain = "John Romero";
+hpbar_name_ExplosiveBarrel = "\cgExplosive Barrel\c-";
+hpbar_name_DoomPlayer = "\c[l5]Player\c-";
+
+// RGA2
+hpbar_map_RGUPlayer = "DoomPlayer";
+hpbar_map_RGULastStandPlayer = "DoomPlayer";
+hpbar_map_MBFHelperDog = "Doge";
+
+// ZDoom
+hpbar_name_StealthArachnotron = "Stealth Arachnotron";
+hpbar_name_StealthArchvile = "Stealth Archvile";
+hpbar_name_StealthBaron = "Stealth Baron Of Hell";
+hpbar_name_StealthCacodemon = "Stealth Cacodemon";
+hpbar_name_StealthChaingunGuy = "Stealth Heavy Weapon Dude";
+hpbar_name_StealthDemon = "Stealth Demon";
+hpbar_name_StealthHellKnight = "Stealth Hell Knight";
+hpbar_name_StealthDoomImp = "Stealth Imp";
+hpbar_name_StealthFatso = "Stealth Mancubus";
+hpbar_name_StealthRevenant = "Stealth Revenant";
+hpbar_name_StealthShotgunGuy = "Stealth Former Human Sergeant";
+hpbar_name_StealthZombieMan = "Stealth Former Human";
+
+//Brutal Doom
+hpbar_name_SuperMastermind = "Super Mastermind";
+hpbar_name_CyberdemonBoss = "Giant Cyberdemon";
+hpbar_name_EvilMarine = "Evil Marine";
+hpbar_name_EasyMarine = "Marine";
+hpbar_name_VeryDeadMarine = "Dead Marine";
+hpbar_name_CapturedMarine = "Captured Marine";
+hpbar_name_TechLamp1 = "Tech Lamp";
+hpbar_name_TechLamp21 = "Tech Lamp";
+hpbar_name_Column1 = "Column";
+hpbar_name_TorchTree2 = "Torch Tree";
+hpbar_name_Big_Tree = "Big Tree";
+hpbar_name_Big_Tree2 = "Big Tree";
+hpbar_name_Big_Tree3 = "Big Tree";
+hpbar_name_Big_Tree4 = "Big Tree";
+hpbar_name_VanillaBigTree = "Big Tree";
+hpbar_name_VanillaSmallTree = "SmallTree";
+hpbar_name_TechPillar1 = "Tech Pillar";
+hpbar_name_ImpaledSkulls = "Heads On A Stick";
+hpbar_name_ImpaledHead = "Head On A Stick";
+
+//Obituary
+hpbar_name_Obituary_HarderImp = "Harder Imp";
+hpbar_name_Obituary_BazookaMan = "Bazooka Man";
+hpbar_name_Obituary_HitechGuy = "Hitech Guy";
+hpbar_name_Obituary_HangingMarine = "Marine";
+
+//STRAIN
+hpbar_name_Cyberdemonjr = "Cyberdemon Jr.";
+hpbar_name_DemonLord = "Demon Lord";
+hpbar_name_PolyDrone = "PolyDrone";
+hpbar_name_BFGtrooper = "BFG Trooper";
+hpbar_name_FastImp = "Imp (Class II)";
+hpbar_name_Holobot = "Holobot";
+
+//NeodoomGold
+hpbar_name_NewBossEye = "BossEye";
+hpbar_name_NewGibbedMarineExtra = "Marine";
+hpbar_name_ChainsawZombie = "Chainsaw Zombie";
+hpbar_name_UziZombie = "Uzi Zombie";
+hpbar_name_MinigunZombie = "Minigun Zombie";
+hpbar_name_PlasmaBolterZombie = "Plasma Bolter Zombie";
+hpbar_name_RailgunZombie = "Railgun Zombie";
+hpbar_name_FreezergunZombie = "Freezer gun Zombie";
+hpbar_name_SlimeZombie = "Slime Zombie";
+hpbar_name_NeoDoomBat = "Bat";
+hpbar_name_DarkImp = "Dark Imp";
+hpbar_name_HumpedImp = "Humped Imp";
+hpbar_name_FoxImp = "Fox Imp";
+hpbar_name_PainEssential = "Pain Essential";
+hpbar_name_Alien1 = "Alien";
+hpbar_name_Alien2 = "Alien";
+hpbar_name_WraithGhost = "Wraith Ghost";
+hpbar_name_LordOfHell = "Lord of Hell";
+hpbar_name_HellDefender = "Hell Defender";
+hpbar_name_EvilDragon = "Dragon";
+hpbar_name_EvilMonster = "Evil Monster";
+hpbar_name_GiantMonster1 = "Giant Monster";
+hpbar_name_GiantMonster2 = "Giant Monster";
+hpbar_name_MegaVixen = "Mega Vixen";
+hpbar_name_FriendlyBabe = "Babe";
+
+// Complex Doom
+hpbar_name_PlasmaGunner = "Plasma Zombie";
+hpbar_name_DemonTechZombie = "Demon Tech Zombie";
+hpbar_name_RocketZombie = "Rocket Zombie";
+hpbar_name_ShotgunZombie = "Shotgunner";
+hpbar_name_AssaultShotgunZombie = "Assault Shotgunner";
+hpbar_name_SuperShotgunZombie = "Double Barrel Shotgun Zombie";
+hpbar_name_QuadShotgunZombie = "\crQuad Barrel Shotgun Zombie\c-";
+hpbar_name_AssaultRifleZombie = "Assault Rifle Zombie";
+hpbar_name_BFGZombieman = "\cdBFG Zombie\c-";
+hpbar_name_VoidImp = "Void Imp";
+hpbar_name_PhaseImp = "\ctPhase Imp\c-";
+hpbar_name_BullFiend = "Bull Fiend";
+hpbar_name_CyberFiend = "Cyber Fiend";
+hpbar_name_MagmaFiend = "Magma Fiend";
+hpbar_name_DTechFiend = "\cqDTech Fiend\c-";
+hpbar_name_TerrorSoul = "Terror Soul";
+hpbar_name_ForgottenOne = "Forgotten One";
+hpbar_name_PoisonSoul = "\cdPoison Soul\c-";
+hpbar_name_SoulKeeper = "Soul Keeper";
+hpbar_name_PoisonElemental = "Poison Elemental";
+hpbar_name_BombElemental = "Bomb Elemental";
+hpbar_name_Behemoth = "Behemoth";
+hpbar_name_Barbatos = "\cqBarbatos\c-";
+hpbar_name_Fusionite = "\ctFusionite\c-";
+hpbar_name_BabyDemolisher = "Baby Demolisher";
+hpbar_name_BabySentient = "Baby Sentient";
+hpbar_name_HellfireRevenant = "Hellfire Revenant";
+hpbar_name_PyroDemon = "\c[x1]Pyro Demon\c-";
+hpbar_name_CyberNoble = "Cyber Noble";
+hpbar_name_HellDuke = "\cdHell Duke\c-";
+hpbar_name_BruiserDemon = "BruiserDemon";
+hpbar_name_Diabolist = "\cgDiabolist\c-";
+hpbar_name_DarkHellion = "\cmDark Hellion\c-";
+hpbar_name_Demolisher = "\cgDemolisher\c-";
+hpbar_name_DarkDemolisher = "\cqDark Demolisher\c-";
+hpbar_name_CerebralSentient = "\cgCerebral Sentient\c-";
+hpbar_name_CyberLord = "\cgCyberlord\c-";
+hpbar_name_DarkCyberdemon = "\cqDark Cyberdemon\c-";
+hpbar_name_Cardinal = "\cgDark Cardinal\c-";
+hpbar_name_SSNazi = "SS Nazi";
+hpbar_name_NaziDog = "Nazi Guard Dog";
+hpbar_name_Hitler = "\cgHi\cjt\cml\cger\c-";
+hpbar_name_DSP = "Darksyde Phil";
+
+// Random Monsters
+hpbar_name_BabyDDemolisher = "\cqBaby Dark Demolisher\c-";
+hpbar_name_Demobus = "\cmDemobus\c-";
+hpbar_name_BFGMastermind = "\cqBFG Mastermind\c-";
+hpbar_name_CacoLich = "Cacolich";
+hpbar_name_CerebralC0mmander = "\c[m6]Cerebral Commander (Weak)\c-";
+hpbar_name_ChaingunFiend = "Chaingun Fiend";
+hpbar_name_ColdNightmare = "\cvCold Nightmare\c-";
+hpbar_name_CorruptedCyberLord = "\c[l5]Corrupted Annihilator\c-";
+hpbar_name_CryoDemon = "Cyro Demon";
+hpbar_name_CryoImp = "Cyro Imp";
+hpbar_name_DTShotgunZombie = "Demon Tech Shotgunner";
+hpbar_name_DTechSpider = "Demon Tech Spider";
+hpbar_name_DemonTechTrooper = "\crDemon Tech Trooper\c-";
+hpbar_name_EMinigunner = "Explosive Minigunner";
+hpbar_name_SSRocketMan = "SS Rocket Man";
+hpbar_name_SSSuperSolider = "SS Super Solider";
+hpbar_name_GeneralRoasterock = "\crGeneral Roasterock\c-";
+hpbar_name_HellArchon = "Hell Archon";
+hpbar_name_HellFireBaron = "\cgHellfire Baron\c-";
+hpbar_name_HFCyberdemonWeak = "\c[z4]Hellfire Cyberdemon (Weak)\c-";
+hpbar_name_HomingRocketZombie = "Homing Rocket Zombie";
+hpbar_name_ImpLord = "\crImp Lord\c-";
+hpbar_name_Manipulator = "\c[s9]Manipulator\c-";
+hpbar_name_SuicideBomber = "Suicide Bomber";
+hpbar_name_PhaseElemental = "\ctPhaseElemental\c-";
+hpbar_name_PhaseSoul = "\ctPhase Soul\c-";
+hpbar_name_PhaseWarlord = "\ctPhase Warlord\c-";
+hpbar_name_PistolZombie = "Pistol Zombie";
+hpbar_name_ProtoDestroyer = "\cgProto-Destroyer\c-";
+hpbar_name_PyroImp = "Pyro Imp";
+hpbar_name_StoneDemon = "Stone Demon";
+hpbar_name_Terminator2 = "\crTerminator\c-";
+hpbar_name_ToxicImp = "Toxic Imp";
+hpbar_name_ToxicLord = "\cdToxic Lord\c-";
+hpbar_name_WidowMaker = "\cmWidow Maker\c-";
+
+//==============================================================================
+// Boss mappings
+//==============================================================================
+
+// Doom
+hpbar_track_Archvile = 1;
+hpbar_track_Cyberdemon = 1;
+hpbar_track_SpiderMastermind = 1;
+
+// Brutal Doom
+hpbar_track_ExplosiveBarrel1 = -1;
+
+// Complex
+hpbar_track_DarkHellion = 1;
+hpbar_track_Demolisher = 1;
+hpbar_track_DarkDemolisher = 1;
+hpbar_track_CerebralSentient = 1;
+hpbar_track_CyberLord = 1;
+hpbar_track_DarkCyberdemon = 1;
+hpbar_track_Cardinal = 1;
+hpbar_track_Hitler = 1;
+
+// LCA
+hpbar_track_Cardihilator = 1;
+hpbar_track_CerebralCardinal = 1;
+hpbar_track_LegendaryAnnihilator = 1;
+hpbar_track_LegendaryAssaultCaptain = 1;
+hpbar_track_LegendaryBabySentient = 1;
+hpbar_track_LegendaryBehemoth = 1;
+hpbar_track_LegendaryCardinal = 1;
+hpbar_track_LegendaryCommando = 1;
+hpbar_track_LegendaryCyberdemon = 1;
+hpbar_track_LegendaryCyberNoble = 1;
+hpbar_track_LegendaryFiend = 1;
+hpbar_track_LegendaryHellKnight = 1;
+hpbar_track_LegendaryImp = 1;
+hpbar_track_LegendaryRedeemer = 1;
+hpbar_track_FakeLegendaryRedeemer = -1;
+hpbar_track_LegendaryRevenant = 1;
+hpbar_track_LegendarySentient = 1;
+hpbar_track_LegendarySoul = 1;
+hpbar_track_LegendaryStealthTrooper = 1;
+hpbar_track_LegendaryTormentor = 1;
+hpbar_track_LegendaryZombie = 1;
+hpbar_track_TrueLegendaryCyberdemon = 1;
+hpbar_track_TrueLegendaryCardinal = 1;
+hpbar_track_Velocirator = 1;
+
+// Randommons
+hpbar_track_BFGMastermind = 1;
+hpbar_track_CerebralCommander = 1;
+hpbar_track_CerebralCommanderIllusion = -1;
+hpbar_track_CorruptedCyberLord = 1;
+hpbar_track_GeneralRoasterock = 1;
+hpbar_track_HellFireCyberdemon = 1;
+hpbar_track_Manipulator = 1;
+hpbar_track_ManipulatorIllusion = -1;
+hpbar_track_PhaseWarlord = 1;
+hpbar_track_Terminator2 = 1;
+hpbar_track_DementedTerminator = 1;
+
+// Ark
+hpbar_track_BlueCardinal = 1;
+
+// Insane LCA
+hpbar_track_EnragedLegZombie = 1;
+hpbar_track_EnragedLegendaryImp = 1;
+hpbar_track_EnragedLegendaryCaptain = 1;
+hpbar_track_EnragedLegendaryRevenant = 1;
+hpbar_track_EnragedLegendaryHellKnight = 1;
+
+// HEM
+hpbar_track_LegChainsawZombie = 1;
+hpbar_track_LegendaryCowboy = 1;
+hpbar_track_ImpureElemental = 1;
+hpbar_track_LegendaryBabyDemolisher = 1;
+hpbar_track_DoomCaster = 1;
+hpbar_track_HellPaladin = 1;
+hpbar_track_Illusionist = 1;
+hpbar_track_AbyssalSatyr = 1;
+hpbar_track_AbyssalImp = 1;
+hpbar_track_Overlord = 1;
+hpbar_track_HEMHeresiarch = 1;
+hpbar_track_Moloch = 1;
+hpbar_track_BeaconSupply = -1;
+
+// Replacers
+hpbar_track_ArachnotronReplacer = -1;
+hpbar_track_ArchvileReplacer = -1;
+hpbar_track_BaronOfHellReplacer = -1;
+hpbar_track_HellKnightReplacer = -1;
+hpbar_track_CacodemonReplacer = -1;
+hpbar_track_CyberdemonReplacer = -1;
+hpbar_track_DemonReplacer = -1;
+hpbar_track_SpectreReplacer = -1;
+hpbar_track_ChaingunGuyReplacer = -1;
+hpbar_track_DoomImpReplacer = -1;
+hpbar_track_FatsoReplacer = -1;
+hpbar_track_LostSoulReplacer = -1;
+hpbar_track_PainElementalReplacer = -1;
+hpbar_track_RevenantReplacer = -1;
+hpbar_track_ShotgunGuyReplacer = -1;
+hpbar_track_SpiderMastermindReplacer = -1;
+hpbar_track_WolfensteinSSReplacer = -1;
+hpbar_track_ZombieManReplacer = -1;
+
+//==============================================================================
+// Actor name mappings
+//==============================================================================
+
+// RGA2
+hpbar_map_RGUPlayer = "DoomPlayer";
+hpbar_map_RGULastStandPlayer = "DoomPlayer";
+hpbar_map_MBFHelperDog = "Doge";
+
+// Brutal Doom
+hpbar_map_Doomer = "DoomPlayer";
+hpbar_map_Marine_Rifle = "EasyMarine";
+hpbar_map_RifleMarineGuarding = "EasyMarine";
+hpbar_map_Marine_Shotgun = "EasyMarine";
+hpbar_map_Marine_SSG = "EasyMarine";
+hpbar_map_Marine_Chaingun = "EasyMarine";
+hpbar_map_Marine_Plasma = "EasyMarine";
+hpbar_map_Marine_Rocket = "EasyMarine";
+hpbar_map_Marine_BFG = "EasyMarine";
+hpbar_map_BossBrainReplacer = "BossBrain";
+hpbar_map_TheCyberdemon = "Cyberdemon";
+hpbar_map_TheSpiderMastermind = "SpiderMastermind";
+hpbar_map_TehArchvile = "Archvile";
+hpbar_map_PainElemental1 = "PainElemental";
+hpbar_map_TehLostSoul = "LostSoul";
+hpbar_map_Cacodemon_ = "Cacodemon";
+hpbar_map_Arachnotron1 = "Arachnotron";
+hpbar_map_BaronofHell2 = "BaronofHell";
+hpbar_map_HellKnight2 = "HellKnight";
+hpbar_map_Revenant1 = "Revenant";
+hpbar_map_Spectro = "Spectre";
+hpbar_map_BullDemon = "Demon";
+hpbar_map_ChaingunGuy1 = "ChaingunGuy";
+hpbar_map_ShotgunGuy1 = "ShotgunGuy";
+hpbar_map_Zombie_Man = "ZombieMan";
+hpbar_map_Nazi = "WolfensteinSS";
+hpbar_map_NaziChecker = "WolfensteinSS";
+hpbar_map_NaziSurrendered = "WolfensteinSS";
+hpbar_map_BrutalStealthArachnotron = "StealthArachnotron";
+hpbar_map_BrutalStealthArchvile = "StealthArchvile";
+hpbar_map_BrutalStealthBaron = "StealthBaron";
+hpbar_map_BrutalStealthCacodemon = "StealthCacodemon";
+hpbar_map_BrutalStealthChaingunGuy = "StealthChaingunGuy";
+hpbar_map_BrutalStealthDemon = "StealthDemon";
+hpbar_map_BrutalStealthHellKnight = "StealthHellKnight";
+hpbar_map_BrutalStealthDoomImp = "StealthDoomImp";
+hpbar_map_BrutalStealthFatso = "StealthFatso";
+hpbar_map_BrutalStealthRevenant = "StealthRevenant";
+hpbar_map_BrutalStealthShotgunGuy = "StealthShotgunGuy";
+hpbar_map_BrutalStealthZombieMan = "StealthZombieMan";
+hpbar_map_ExplosiveBarrel1  = "ExplosiveBarrel";
+
+// BIOWAR
+hpbar_map_BiowarMonsterSounds = "WolfensteinSS";
+
+// STRAIN
+hpbar_map_Chaingunner = "ChaingunGuy";
+hpbar_map_StrainDemon = "Demon";
+
+// NeodoomGold
+hpbar_map_NewZombieMan = "ZombieMan";
+hpbar_map_NewShotgunGuy = "ShotgunGuy";
+hpbar_map_NewChaingunGuy = "ChaingunGuy";
+hpbar_map_NewWolfensteinSS = "WolfensteinSS";
+hpbar_map_NewDoomImp = "Imp";
+hpbar_map_NewDemon = "Demon";
+hpbar_map_NewSpectre = "Demon";
+hpbar_map_NewRevenant = "Revenant";
+hpbar_map_NewLostSoul = "LostSoul";
+hpbar_map_NewCacodemon = "Cacodemon";
+hpbar_map_NewBaronOfHell = "BaronOfHell";
+hpbar_map_NewHellKnight = "NewBaronOfHell";
+hpbar_map_NewFatso = "Fatso";
+hpbar_map_NewArachnotron = "Arachnotron";
+hpbar_map_NewArchvile ="Archvile";
+hpbar_map_NewCyberdemon = "Cyberdemon";
+hpbar_map_NewSpiderMastermind = "SpiderMastermind";
+hpbar_map_NewBossBrain = "BossBrain";
+
+// Complex Doom
+hpbar_map_HitlerNoSuit = "Hitler";
+hpbar_map_ModdedExplosiveBarrel = "ExplosiveBarrel";
+hpbar_map_SimplexDoomPlayer = "DoomPlayer";
+
+// LCA
+hpbar_map_FakeLegendaryRedeemer = "LegendaryRedeemer";
+hpbar_map_FakeLegendaryRedeemerbycardi = "LegendaryRedeemer";
+hpbar_map_ReinforcementLegCardi = "LegendaryCardinal";
+hpbar_map_FakeLegCardi  = "LegendaryCardinal";
+hpbar_map_FakeLegCardi2 = "LegendaryCardinal";
+hpbar_map_FakeLegCardi3 = "LegendaryCardinal";
+hpbar_map_FakeLegendaryZombie = "LegendaryZombie";
+hpbar_map_FakeLegendaryHellKnight = "LegendaryHellKnight";
+hpbar_map_FakeLegendaryImp = "LegendaryImp";
+hpbar_map_FakeLegendaryBehemoth = "LegendaryBehemoth";
+hpbar_map_FakeLegendaryRevenant = "LegendaryRevenant";
+hpbar_map_FakeLegendaryCyberdemon = "LegendaryCyberdemon";
+hpbar_map_FakeLegendaryAssaultCaptain = "LegendaryAssaultCaptain";
+hpbar_map_FakeLegendaryCyberNoble = "LegendaryCyberNoble";
+hpbar_map_FakeTLegCardi  = "TrueLegendaryCardinal";
+hpbar_map_FakeTLegCardi2 = "TrueLegendaryCardinal";
+hpbar_map_FakeTLegCardi3 = "TrueLegendaryCardinal";
+hpbar_map_BanTerrorSoul = "TerrorSoul";
+hpbar_map_BanForgottenOne = "ForgottenOne";
+hpbar_map_BanPoisonSoul = "PoisonSoul";
+hpbar_map_BanRictus = "Rictus";
+
+// Random Monsters
+hpbar_map_CFusionite = "Fusionite";
+hpbar_map_CDTechSpider = "DTechSpider";
+hpbar_map_CBabyDemolisher = "BabyDemolisher";
+hpbar_map_CBabyDDemolisher = "BabyDDemolisher";
+hpbar_map_CBabySentient = "BabySentient";
+hpbar_map_CerebralCommanderIllusion = "CerebralCommander";
+hpbar_map_ManipulatorIllusion = "Manipulator";
