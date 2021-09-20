@@ -1,14 +1,17 @@
-user	noarchive int hpbar_style = 1;
-user	noarchive bool hpbar_show_friendly = true;
-user	noarchive bool hpbar_announcer = true;
+user	int hpbar_style = 1;
+user	bool hpbar_announcer = true;
+user	bool hpbar_show_friendly = true;
+user	bool hpbar_tracker = true;
+user	int hpbar_tracker_scale = 1;
+user	int hpbar_tracker_x_offset = 0;
+user	int hpbar_tracker_y_offset = 0;
+user	noarchive float hpbar_tracker_x = 0.02;
+user	noarchive float hpbar_tracker_y = 0.58;
+server	noarchive bool hpbar_tracker_srv = true;
 server	noarchive bool hpbar_rekt = true;
 server	noarchive int hpbar_threshold = 0;
-server	noarchive bool hpbar_tracker = true;
 server	noarchive int hpbar_tracker_threshold = 0;
-server	noarchive float hpbar_tracker_x = 0.02;
-server	noarchive float hpbar_tracker_y = 0.58;
 //==============================================================================
-
 server noarchive string hpbar_tracked_names0 = "";
 server noarchive string hpbar_tracked_names1 = "";
 server noarchive string hpbar_tracked_names2 = "";
@@ -41,8 +44,6 @@ server noarchive string hpbar_tracked_names28 = "";
 server noarchive string hpbar_tracked_names29 = "";
 server noarchive string hpbar_tracked_names30 = "";
 server noarchive string hpbar_tracked_names31 = "";
-server noarchive string hpbar_tracked_names32 = "";
-
 server noarchive string hpbar_announcer_bigtext = "";
 server noarchive string hpbar_announcer_smalltext = "";
 server noarchive string hpbar_announcer_tinytext = "";

@@ -3,15 +3,15 @@ HPBAR_LINE_REFLECT = "\c[x5]Reflective\c-";
 HPBAR_LINE_INVUL = "\c[i8]Invulnerable\c-";
 HPBAR_LINE_FRIEND = "\c[i7]Friendly\c-";
 HPBAR_LINE_GHOST = "\c[d9]Ghost\c-";
-HPBAR_LINE_INVIS = "\c[d9]Invisible\c-";
-HPBAR_LINE_STEALTH = "\c[d9]Stealth\c-";
+HPBAR_LINE_INVIS = "\c[i0]Invisible\c-";
+HPBAR_LINE_STEALTH = "\c[03]Stealth\c-";
 
 HPBAR_TRACKER_REFLECT = "\c[x5][REFLECT]\c-";
 HPBAR_TRACKER_INVUL = "\c[i8][INVUL]\c-";
 HPBAR_TRACKER_FRIEND = "\c[i7][FRIENDLY]\c-";
 HPBAR_TRACKER_GHOST = "\c[d9][GHOST]\c-";
-HPBAR_TRACKER_INVIS = "\c[d9][INVISIBLE]\c-";
-HPBAR_TRACKER_STEALTH = "\c[d9][STEALTH]\c-";
+HPBAR_TRACKER_INVIS = "\c[i0][INVISIBLE]\c-";
+HPBAR_TRACKER_STEALTH = "\c[03][STEALTH]\c-";
 
 HPBAR_TRACKER_10REKT_S = " \c[a6](";
 HPBAR_TRACKER_10REKT_E = " rekts)\c-";

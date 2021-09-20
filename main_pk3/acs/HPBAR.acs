@@ -8,13 +8,14 @@ int MaxClientsCount = 0;
 #define INT_MAX							2147483647
 #define STYLE_FULL						1
 #define STYLE_MINIMAL					2
+#define LINEBAR_TIC_ACTIVE				105
 
 #define ANNOUNCER_HOLDTIME				5.0
 #define ANNOUNCER_FADETIME				0.5
 
 #define FULL_HUD_WIDTH					800
 #define FULL_HUD_HEIGHT					600
-#define FULL_HOLDTIME					1.0
+#define FULL_HOLDTIME					0.25
 #define FULL_FADETIME					0.2
 #define FULL_FADETIME_SECOND			0.025
 #define FULL_HPBAR_X					400.0
@@ -31,15 +32,11 @@ int MaxClientsCount = 0;
 #define MINIMAL_HP_X					640.0
 #define MINIMAL_HP_Y					500.0
 
-#define TRACKER_HUD_WIDTH				960
-#define TRACKER_HUD_HEIGHT				720
 #define TRACKER_HOLDTIME				0.2
 #define TRACKER_FADETIME				0.1
 
-#define MAX_TRACKERS					33
+#define MAX_TRACKERS					32
 #define NUM_RANKINGS					10
-
-#define INVALID_TID						0
 
 #define FLAG_FRIENDLY					1
 #define FLAG_REFLECTIVE					2
@@ -70,7 +67,7 @@ int tracked_hps[MAX_TRACKERS];
 int tracked_max_hps[MAX_TRACKERS];
 int tracked_flags[MAX_TRACKERS];
 int tracked_kills[MAX_TRACKERS];
-int maxhp_rankings[NUM_RANKINGS];
+bool tracked_tids_select[MAX_TRACKERS];
 int announcers_playing = 0;
 int announcer_priority = -1;
 int announcer_id = 0;
@@ -135,7 +132,7 @@ function int MaxPlayersInGame(void)
 		}
 		else if(MaxClientsCount <= 0)
 		{
-			MaxClientsCount = 8;//GZDoom или прочее "сетевое" говно.
+			MaxClientsCount = 8;//GZDoom or other "network" shit.
 		}
 	}
 	else
@@ -159,16 +156,12 @@ function bool get_bool_user_cvar(str cvar)
 	return GetUserCVar(ConsolePlayerNumber(),cvar);
 }
 
-function bool already_selected(int x, int n)
+function void reset_selected(void)
 {
-	for(int i = 0; i < n; i++)
+	for(int i = 0; i < MAX_TRACKERS; i++)
 	{
-		if(x == maxhp_rankings[i])
-		{
-			return true;
-		}
+		tracked_tids_select[i] = false;
 	}
-	return false;
 }
 
 function int hpbar_align_left(int x)
@@ -199,13 +192,13 @@ function int HPBarSetTid(void)
 function int GetOrSetMonsterTrackNum(void)
 {
 	int TrackNum,i,j;
-	for(i = 1; (i < MAX_TRACKERS) && (j < MAX_TRACKERS); i++)
+	for(i = 0; (i < MAX_TRACKERS) && (j < MAX_TRACKERS); i++)
 	{
-		if((tracked_tids[i] == INVALID_TID) || (!(ActorIsExists(tracked_tids[i]) && CheckActorClass(tracked_tids[i],"hpbar-tracker"))))
+		if((tracked_tids[i] == 0) || (!(ActorIsExists(tracked_tids[i]) && CheckActorClass(tracked_tids[i],"hpbar-tracker"))))
 		{
 			TrackNum = UniqueTID(0,0);
 			SpawnProjectile(0,"hpbar-tracker",0,0,0,0,TrackNum);
-			if(ThingCount(T_NONE,TrackNum) == 1)//проверить на наличие совпадающего tid.
+			if(ThingCount(T_NONE,TrackNum) == 1)//check for a matching tid.
 			{
 				tracked_tids[i] = TrackNum;
 				return i;
@@ -219,26 +212,88 @@ function int GetOrSetMonsterTrackNum(void)
 		}
 	}
 	//there was no room: replace for weakest monster
-	j = 0;
+	j = -1;
 	int lowestHP = INT_MAX;
-	int hp;
-	for(i = 1; i < MAX_TRACKERS; i++)
+	int lowestMaxHP = INT_MAX;
+	int hp,max_hp;
+	for(i = 0; i < MAX_TRACKERS; i++)
 	{
-		hp = percent(tracked_hps[i],tracked_max_hps[i],100,true);
-		if(hp < lowestHP)
+		hp = tracked_hps[i];
+		max_hp = tracked_max_hps[i];
+		if((max_hp < lowestMaxHP) || ((max_hp == lowestMaxHP) && (hp < lowestHP)) || (tracked_flags[i] & FLAG_FRIENDLY))
 		{
 			j = i;
 			lowestHP = hp;
+			lowestMaxHP = max_hp;
 		}
 	}
-	if(j > 0)
+	if(j >= 0)
 	{
 		TrackNum = UniqueTID(0,0);
 		SpawnProjectile(0,"hpbar-tracker",0,0,0,0,TrackNum);
-		if(ThingCount(T_NONE,TrackNum) == 1)//проверить на наличие совпадающего tid.
+		if(ThingCount(T_NONE,TrackNum) == 1)//check for a matching tid.
 		{
 			tracked_tids[j] = TrackNum;
 			return j;
+		}
+	}
+	return -1;
+}
+
+function int GetLineTrackNum(int LineTrackNum, int PuffTID, bool drone)
+{
+	if((LineTrackNum > 0) && ActorIsExists(LineTrackNum) && CheckActorClass(LineTrackNum,"hpbarline-tracker") && IsPointerEqual(AAPTR_Tracer,AAPTR_Target,PuffTID,LineTrackNum))
+	{
+		SetActorProperty(LineTrackNum,APROP_ReactionTime,LINEBAR_TIC_ACTIVE);
+		return LineTrackNum;
+	}
+	else
+	{
+		int TrackNum,TrackNum2;
+		TrackNum = UniqueTID(0,0);
+		SpawnProjectile(0,"hpbarline-tracker",0,0,0,0,TrackNum);
+		if(ActorIsExists(TrackNum) && CheckActorClass(TrackNum,"hpbarline-tracker") && (ThingCount(T_NONE,TrackNum) == 1))//check for a matching tid.
+		{
+			if(SetActivator(TrackNum) == 1)
+			{
+				//Copy the player's pointer.
+				if(drone)
+				{
+					if((SetActivator(PuffTID,AAPTR_Target) == 1) && (SetActivator(0,AAPTR_Master) == 1))
+					{
+						TrackNum2 = UniqueTID(0,0);
+						SpawnProjectile(0,"hpbarline-tracker",0,0,0,0,TrackNum2);
+						if(ActorIsExists(TrackNum2) && CheckActorClass(TrackNum2,"hpbarline-tracker"))
+						{
+							if(SetActivator(TrackNum) == 1)
+							{
+								SetPointer(AAPTR_Master,TrackNum2,AAPTR_Target,PTROP_UNSAFETARGET|PTROP_UNSAFEMASTER);
+								SetActorProperty(TrackNum2,APROP_ReactionTime,0);
+							}
+						}
+						else
+						{
+							SetActorProperty(TrackNum,APROP_ReactionTime,0);
+							return 0;
+						}
+					}
+					else
+					{
+						SetActorProperty(TrackNum,APROP_ReactionTime,0);
+						return 0;
+					}
+				}
+				else
+				{
+					SetPointer(AAPTR_Master,PuffTID,AAPTR_Target,PTROP_UNSAFETARGET|PTROP_UNSAFEMASTER);
+				}
+				//Return to the monster.
+				if(SetActivator(TrackNum,AAPTR_Target) == 1)
+				{
+					SetActorProperty(TrackNum,APROP_ReactionTime,LINEBAR_TIC_ACTIVE);
+					return TrackNum;
+				}
+			}
 		}
 	}
 	return 0;
@@ -364,7 +419,7 @@ function bool streq(str x, str y)
 	return (StrICmp(x,y) == 0);
 }
 
-//Костыль заменяющий управляющие символы на текст.
+//Replaces control characters with text.
 function str ccunescape_impl(str s, int n)
 {
 	if(streq(s,""))
@@ -488,9 +543,9 @@ function bool get_actor_invis(void)
 
 function void request_broadcast_tracker_info(void)
 {
-	for(int i = 1; i < MAX_TRACKERS; i++)
+	for(int i = 0; i < MAX_TRACKERS; i++)
 	{
-		if(tracked_tids[i] != INVALID_TID)
+		if(tracked_tids[i] > 0)
 		{
 			tracked_broadcast[i] = true;
 		}
@@ -505,7 +560,7 @@ function int get_flags(void)
 function str HPBarGetActorInfo(int i)
 {
 	tracked_counter[i]++;
-	if(tracked_broadcast[i] || (tracked_counter[i] > 7))//запуск каждый седьмой вызов.
+	if(tracked_broadcast[i] || (tracked_counter[i] > 7))//starting every seventh call.
 	{
 		tracked_counter[i] = 0;
 		tracked_hps[i] = GetActorProperty(0,APROP_Health);
@@ -519,7 +574,7 @@ function str HPBarGetActorInfo(int i)
 
 function void HPBarResetActorInfo(int i)
 {
-	tracked_hps[i] = INVALID_TID;
+	tracked_hps[i] = 0;
 	tracked_max_hps[i] = 0;
 	tracked_kills[i] = 0;
 	tracked_flags[i] = 0;
@@ -552,10 +607,9 @@ script "Copy_Invul_Reflect_Friendly_to_Clientside" (int i, int tracked_flags_) C
 	tracked_flags[i] = tracked_flags_;
 }
 //==============================================================================
-//Очистка списков на срвере
 script "HPBar_Open" OPEN
 {
-	clear_tracklist();
+	clear_tracklist();//Clearing lists on the server.
 	int MaxPlayers = MaxPlayersInGame();
 	int OldPlayers,Players,i;
 	while(1)
@@ -600,49 +654,71 @@ script "HPBar_ReOpen" REOPEN
 	}
 }
 
-//Запуск трекера на клиенте.
+//Launching the tracker on the client.
 script "HPBar_Open-cs" OPEN CLIENTSIDE
 {
 	delay(35+(ConsolePlayerNumber()/4));
-	int x,y,rank,hp_limit,maxhp_limit,i,tid,max_hp,hp,n,hpp,kills;
+	int x,y,rank,hp_limit,maxhp_limit,i,tid,max_hp,hp,n,hpp,kills,TRACKER_HUD_WIDTH,TRACKER_HUD_HEIGHT,tracker_scale,hpbar_tracker_x_,hpbar_tracker_y_;
 	bool friendly_show;
 	str name,statemsg,killsmsg;
-	int hpbar_tracker_x_ = GetCVar("hpbar_tracker_x");
-	int hpbar_tracker_y_ = GetCVar("hpbar_tracker_y");
-	bool hpbar_tracker_ = GetCVar("hpbar_tracker");
+	bool hpbar_tracker_srv = GetCVar("hpbar_tracker_srv");
+	bool hpbar_tracker_ = GetUserCVar(ConsolePlayerNumber(),"hpbar_tracker");
+	tracker_scale = GetUserCVar(ConsolePlayerNumber(),"hpbar_tracker_scale");
+	hpbar_tracker_x_ = GetUserCVar(ConsolePlayerNumber(),"hpbar_tracker_x");
+	hpbar_tracker_y_ = GetUserCVar(ConsolePlayerNumber(),"hpbar_tracker_y");
+	Switch(tracker_scale)
+	{
+		case 0:
+			TRACKER_HUD_WIDTH = 800;
+			TRACKER_HUD_HEIGHT = 600;
+			break;
+		case 1:
+			TRACKER_HUD_WIDTH = 960;
+			TRACKER_HUD_HEIGHT = 720;
+			break;
+		case 2:
+			TRACKER_HUD_WIDTH = 1024;
+			TRACKER_HUD_HEIGHT = 768;
+			break;
+		case 3:
+			TRACKER_HUD_WIDTH = 1280;
+			TRACKER_HUD_HEIGHT = 960;
+			break;
+	}
 	SetHudSize(TRACKER_HUD_WIDTH, TRACKER_HUD_HEIGHT, true);
 	SetFont(DEFAULT_FONT);
 	while(true)
 	{
 		delay(3);
-		if(hpbar_tracker_)
+		if(hpbar_tracker_ && hpbar_tracker_srv)
 		{
-			x = to_int((hpbar_tracker_x_ - 0.5) * GetScreenWidth() / GetScreenHeight() * TRACKER_HUD_HEIGHT) + (TRACKER_HUD_WIDTH / 2);
-			y = to_fixed(to_int((hpbar_tracker_y_ - 0.5) * GetScreenHeight()) + (TRACKER_HUD_HEIGHT / 2));
+			x = GetUserCVar(ConsolePlayerNumber(),"hpbar_tracker_x_offset") + to_int((hpbar_tracker_x_ - 0.5) * GetScreenWidth() / GetScreenHeight() * TRACKER_HUD_HEIGHT) + (TRACKER_HUD_WIDTH / 2);
+			y = to_fixed(GetUserCVar(ConsolePlayerNumber(),"hpbar_tracker_y_offset")) + to_fixed(to_int((hpbar_tracker_y_ - 0.5) * GetScreenHeight()) + (TRACKER_HUD_HEIGHT / 2));
 			friendly_show = get_bool_user_cvar("hpbar_show_friendly");
+			reset_selected();
 			for(rank = 0; rank < NUM_RANKINGS; rank++)
 			{
+				n = -1;
 				hp_limit = 0;
 				maxhp_limit = 0;
-				maxhp_rankings[rank] = -1;
-				for(i = 1; i < MAX_TRACKERS; i++)
+				for(i = 0; i < MAX_TRACKERS; i++)
 				{
 					tid = tracked_tids[i];
-					if((tid != INVALID_TID) && (!already_selected(i,rank)))
+					if((tid > 0) && (!tracked_tids_select[i]))
 					{
-						max_hp = tracked_max_hps[i];
 						hp = tracked_hps[i];
+						max_hp = tracked_max_hps[i];
 						if(((max_hp > maxhp_limit) || ((max_hp == maxhp_limit) && (hp > hp_limit))) && (friendly_show || ((tracked_flags[i] & FLAG_FRIENDLY) == 0)))
 						{
-							maxhp_rankings[rank] = i;
+							n = i;
 							maxhp_limit = max_hp;
 							hp_limit = hp;
 						}
 					}
 				}
-				n = maxhp_rankings[rank];
-				if(n != -1)
+				if(n >= 0)
 				{
+					tracked_tids_select[n] = true;
 					name = GetCVarString(StrParam(s:"hpbar_tracked_names", d:n));
 					if(!streq(name,""))
 					{
@@ -677,13 +753,13 @@ script "HPBar_Open-cs" OPEN CLIENTSIDE
 								killsmsg = StrParam(l:"HPBAR_TRACKER_1REKT_S", d:kills, l:"HPBAR_TRACKER_1REKT_E");
 							}
 						}
-						HudMessage(s:hpp_to_color(hpp), d:hp, s:"/", d:max_hp, s:"\c-";HUDMSG_FADEOUT, HUD_TEXT_TRACKER_NAME_ID + rank, CR_WHITE, hpbar_align_right(x + 80), y + rank * 12.0, TRACKER_HOLDTIME, TRACKER_FADETIME);
-						HudMessage(s:hpp_to_color(hpp), d:hpp, s:"%\c-";HUDMSG_FADEOUT, HUD_TEXT_TRACKER_NAME_ID + NUM_RANKINGS + rank, CR_WHITE, hpbar_align_right(x + 120), y + rank * 12.0, TRACKER_HOLDTIME, TRACKER_FADETIME);
-						HudMessage(s:name, s:killsmsg, s:statemsg;HUDMSG_FADEOUT, HUD_TEXT_TRACKER_NAME_ID + NUM_RANKINGS * 2 + rank, CR_WHITE, hpbar_align_left(x + 132), y + rank * 12.0, TRACKER_HOLDTIME, TRACKER_FADETIME);
+						HudMessage(s:hpp_to_color(hpp), d:hp, s:"/", d:max_hp, s:"\c-";HUDMSG_FADEOUT, HUD_TEXT_TRACKER_NAME_ID + rank, CR_WHITE, hpbar_align_right(x + 80), y + (rank * 12.0), TRACKER_HOLDTIME, TRACKER_FADETIME);
+						HudMessage(s:hpp_to_color(hpp), d:hpp, s:"%\c-";HUDMSG_FADEOUT, HUD_TEXT_TRACKER_NAME_ID + NUM_RANKINGS + rank, CR_WHITE, hpbar_align_right(x + 120), y + (rank * 12.0), TRACKER_HOLDTIME, TRACKER_FADETIME);
+						HudMessage(s:name, s:killsmsg, s:statemsg;HUDMSG_FADEOUT, HUD_TEXT_TRACKER_NAME_ID + NUM_RANKINGS * 2 + rank, CR_WHITE, hpbar_align_left(x + 132), y + (rank * 12.0), TRACKER_HOLDTIME, TRACKER_FADETIME);
 					}
 					else
 					{
-						tracked_tids[n] = INVALID_TID;
+						tracked_tids[n] = 0;
 						break;
 					}
 				}
@@ -696,7 +772,8 @@ script "HPBar_Open-cs" OPEN CLIENTSIDE
 		else
 		{
 			delay(35);
-			hpbar_tracker_ = GetCVar("hpbar_tracker");
+			hpbar_tracker_srv = GetCVar("hpbar_tracker_srv");
+			hpbar_tracker_ = GetUserCVar(ConsolePlayerNumber(),"hpbar_tracker");
 		}
 	}
 }
@@ -740,35 +817,77 @@ script "HPBar_HitTarget" (void)
 script "HPBar_GetTarget" (void)
 {
 	int PuffTID = HPBarSetTid();
+	int LineTrackNum;
+	bool drone = false;
 	if(SetActivator(0,AAPTR_TARGET) == 1)
 	{
 		int p_num = PlayerNumber();
+		LineTrackNum = CheckInventory("MonsterAlreadyTrackedLine");
 		if((p_num < 0) && (SetActivator(0,AAPTR_MASTER) == 1))
 		{
+			drone = true;
 			p_num = PlayerNumber();
+			LineTrackNum = CheckInventory("MonsterAlreadyTrackedLine");
 		}
 		if((p_num >= 0) && (SetActivator(PuffTID,AAPTR_TRACER) == 1) && ActorIsAlive(0))
 		{
 			int max_hp = get_max_hp();
 			if(max_hp > 0)
 			{
-				if(GetCVar("hpbar_tracker") && (CheckInventory("hpbar-tracker-cooldown") < 1))
+				if(GetCVar("hpbar_tracker_srv") && (CheckInventory("hpbar-tracker-cooldown") < 1))
 				{
 					GiveInventory("hpbar-tracker-cooldown",1);
 					ACS_NamedExecuteAlways("HPBar_TrackerView",0,0);
 				}
 				if(max_hp >= GetCVar("hpbar_threshold"))
 				{
-					int flags = get_flags();
-					int hp = GetActorProperty(0,APROP_Health);
-					ACS_NamedExecuteWithResult("HPBar_LinebarView", p_num, hp, max_hp, flags);
+					int NewLineTrackNum = GetLineTrackNum(LineTrackNum,PuffTID,drone);
+					if((NewLineTrackNum > 0) && (NewLineTrackNum != LineTrackNum))//launching a new line tracker.
+					{
+						//To the player.
+						if(SetActivator(NewLineTrackNum,AAPTR_Master) == 1)
+						{
+							TakeInventory("MonsterAlreadyTrackedLine",INT_MAX);
+							GiveInventory("MonsterAlreadyTrackedLine",NewLineTrackNum);
+							LineTrackNum = CheckInventory("MonsterAlreadyTrackedLine");
+							int flags,hp;
+							while(PlayerInGame(p_num) && (NewLineTrackNum == LineTrackNum))
+							{
+								//To the monster.
+								if(SetActivator(NewLineTrackNum,AAPTR_Target) == 1)
+								{
+									flags = get_flags();
+									hp = GetActorProperty(0,APROP_Health) * !((flags & FLAG_DEAD) == FLAG_DEAD);
+									ACS_NamedExecuteWithResult("HPBar_LinebarView", p_num, hp, max_hp, flags);
+								}
+								else
+								{
+									break;
+								}
+								delay(3);
+								//To the player.
+								if(SetActivator(NewLineTrackNum,AAPTR_Master) == 1)
+								{
+									LineTrackNum = CheckInventory("MonsterAlreadyTrackedLine");
+								}
+								else
+								{
+									break;
+								}
+							}
+							if(ActorIsExists(NewLineTrackNum) && CheckActorClass(NewLineTrackNum,"hpbarline-tracker"))
+							{
+								SetActorProperty(NewLineTrackNum,APROP_ReactionTime,0);
+							}
+						}
+					}
 				}
 			}
 		}
 	}
 }
 
-//Скрипт выпоняется от имени цели (монстра).
+//The script is executed on behalf of the target (monster).
 script "HPBar_LinebarView" (int p_num, int hp, int max_hp, int flags) CLIENTSIDE
 {
 	if(ConsolePlayerNumber() == p_num)
@@ -794,7 +913,7 @@ script "HPBar_LinebarView" (int p_num, int hp, int max_hp, int flags) CLIENTSIDE
 	}
 }
 
-//Отслеживание монстра попавшего в прицел, цикл проверки работает пока он жив.
+//Tracking a monster caught in the sight, the check cycle works while it is alive.
 script "HPBar_TrackerView" (int force_track)
 {
 	int tracked_tid = CheckInventory("MonsterAlreadyTracked");
@@ -804,11 +923,11 @@ script "HPBar_TrackerView" (int force_track)
 		if((force_track == 1) || should_track())
 		{
 			TakeInventory("MonsterAlreadyTracked",INT_MAX);
-			//Найти пустой слот, получить трек номер, создать актор трекера.
+			//Find an empty slot, get a track number, create a tracker actor.
 			int i = GetOrSetMonsterTrackNum();
-			if(i > 0)//Если не нашлось места в списке - остановить скрипт.
+			if(i >= 0)//If there is no place in the list, stop the script.
 			{
-				GiveInventory("MonsterAlreadyTracked",tracked_tids[i]);//Выдать трекномер монстру для отслеживания повторов.
+				GiveInventory("MonsterAlreadyTracked",tracked_tids[i]);
 				tracked_tid = tracked_tids[i];
 				tracked_broadcast[i] = true;
 				str name = HPBarGetActorInfo(i);
@@ -816,9 +935,9 @@ script "HPBar_TrackerView" (int force_track)
 				int old_hp,old_kills,old_flags;
 				while(ActorIsExists(tracked_tid) && CheckActorClass(tracked_tid,"hpbar-tracker"))
 				{
-					if(SetActivator(tracked_tid) == 1)//переключение на трекер.
+					if(SetActivator(tracked_tid) == 1)//switching to the tracker.
 					{
-						SetUserVariable(0,"user_tracked_num",i);
+						SetUserVariable(0,"user_tracked_num",i+1);
 						SetActorProperty(0,APROP_ReactionTime,35);
 						if(tracked_broadcast[i])
 						{
@@ -844,7 +963,7 @@ script "HPBar_TrackerView" (int force_track)
 						old_kills = tracked_kills[i];
 						old_flags = tracked_flags[i];
 						delay(1);
-						if(SetActivator(0,AAPTR_TARGET) == 1)//переключение на монстра.
+						if(SetActivator(0,AAPTR_TARGET) == 1)//switch to the monster.
 						{
 							if(ActorIsAlive(0) && (tracked_tid == tracked_tids[i]) && (tracked_tid == CheckInventory("MonsterAlreadyTracked")))
 							{
@@ -869,15 +988,12 @@ script "HPBar_TrackerView" (int force_track)
 				if(tracked_tid == tracked_tids[i])
 				{
 					HPBarResetActorInfo(i);
-					ACS_NamedExecuteWithResult("Copy_tracked_tid_and_MaxHP_to_Clientside",i,INVALID_TID,0);
+					ACS_NamedExecuteWithResult("Copy_tracked_tid_and_MaxHP_to_Clientside",i,0,0);
 				}
-				if((SetActivator(tracked_tid) == 1) && CheckActorClass(tracked_tid,"hpbar-tracker"))
+				if((SetActivator(tracked_tid,AAPTR_TARGET) == 1) && CheckActorClass(tracked_tid,"hpbar-tracker"))
 				{
-					SetUserVariable(0,"user_tracked_num",0);
-					if(SetActivator(0,AAPTR_TARGET) == 1)
-					{
-						TakeInventory("MonsterAlreadyTracked",INT_MAX);
-					}
+					SetUserVariable(tracked_tid,"user_tracked_num",0);
+					TakeInventory("MonsterAlreadyTracked",INT_MAX);
 				}
 				else
 				{
@@ -888,14 +1004,15 @@ script "HPBar_TrackerView" (int force_track)
 	}
 }
 
-script "HPBar_TargetDeath" (void) //Костыль для сетевого говнокода.
+script "HPBar_TargetDeath" (void) //A crutch for the network shit code.
 {
 	//The monster is dead, remove it from the slot and tell clients to stop tracking it.
 	int i = GetUserVariable(0,"user_tracked_num");
 	if(i > 0)
 	{
+		i--;
 		HPBarResetActorInfo(i);
-		ACS_NamedExecuteWithResult("Copy_tracked_tid_and_MaxHP_to_Clientside",i,INVALID_TID,0);
+		ACS_NamedExecuteWithResult("Copy_tracked_tid_and_MaxHP_to_Clientside",i,0,0);
 		Thing_ChangeTID(0,0);
 		if(SetActivator(0,AAPTR_TARGET) == 1)
 		{
@@ -908,10 +1025,10 @@ script "HPBar_TargetDeath" (void) //Костыль для сетевого го�
 	}
 }
 
-//Скрипт выполняется от имени убившего игрока монстра или от имени самого игрока при самоубийстве.
+//The script is executed on behalf of the monster that killed the player or on behalf of the player himself in case of suicide.
 script "HPBar_Rect" (int p_num)
 {
-	if(GetCVar("hpbar_tracker"))
+	if(GetCVar("hpbar_tracker_srv"))
 	{
 		ACS_NamedExecuteAlways("HPBar_TrackerView",0,1);
 	}

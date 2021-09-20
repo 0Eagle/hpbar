@@ -1,6 +1,7 @@
 Actor MonsterScore : Inventory { Inventory.MaxAmount 999 Inventory.InterHubAmount 0 }
 Actor MonsterScoreTemporary : MonsterScore { }
-Actor MonsterAlreadyTracked : Inventory { Inventory.MaxAmount 2147483647 Inventory.InterHubAmount 0 }
+Actor MonsterAlreadyTracked : Inventory { +SERVERSIDEONLY Inventory.MaxAmount 2147483647 Inventory.InterHubAmount 0 }
+Actor MonsterAlreadyTrackedLine : Inventory { +SERVERSIDEONLY Inventory.MaxAmount 2147483647 Inventory.InterHubAmount 0 }
 Actor hpbar-testing-puff-base
 {
 Height 4
@@ -47,7 +48,7 @@ States
 
 Actor hpbar-testing-thru-puff : hpbar-testing-puff { +MTHRUSPECIES }
 
-Actor hpbar-tracker
+Actor hpbar-tracker-base
 {
 Height 4
 Radius 4
@@ -63,7 +64,6 @@ ReactionTime 35
 +NOTONAUTOMAP
 +SERVERSIDEONLY
 +NONETID
-var int user_tracked_num;
 States
 	{
 	Spawn:
@@ -72,8 +72,30 @@ States
 		TNT1 A 1 A_CountDown
 		Loop
 	Death:
+		TNT1 A 1
+		Stop
+	}
+}
+
+Actor hpbar-tracker : hpbar-tracker-base
+{
+var int user_tracked_num;
+States
+	{
+	Death:
 		TNT1 A 0
 		TNT1 A 10 ACS_NamedExecuteAlways("HPBar_TargetDeath",0)
+		Stop
+	}
+}
+
+Actor hpbarline-tracker : hpbar-tracker-base
+{
+States
+	{
+	Death:
+		TNT1 A 0
+		TNT1 A 10 Thing_ChangeTID(0,0)
 		Stop
 	}
 }
@@ -84,6 +106,7 @@ Actor hpbar-tracker-cooldown : PowerDamage
 -INVENTORY.INVBAR
 +INVENTORY.UNDROPPABLE
 +INVENTORY.ALWAYSPICKUP
++INVENTORY.AUTOACTIVATE
 DamageFactor "nothing", 1.0
 Powerup.duration -1
 }

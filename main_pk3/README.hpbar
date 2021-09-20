@@ -5,11 +5,7 @@ Note From Eagle:
 
 This mod displays a HP bar and info about the target being aimed at. It also provides a HP tracker for boss monsters that is visible for all players including spectators.
 
-This mod is designed to work with all mods (sans those that come with their own HP bars, e.g. WoC and DnD) and provides special name pretty-printing for popular Complex Doom mods (LCA, RM, HAF, Ark, ILCA) and RGA2. Server hosts can further customize the behavior via cvars to support other mods.
-
-## Dependencies
-
-* NewTextColors (This should be loaded automatically if you play on clusters like TSPG.)
+This mod is designed to work with all mods (sans those that come with their own HP bars, e.g. WoC and DnD) and provides special name pretty-printing for popular Complex Doom mods (LCA, RM, HAF, Ark, ILCA) and RGA2. Server hosts can further customize the behavior via LANGUAGE lump to support other mods.
 
 ## CVars
 
@@ -26,12 +22,15 @@ This mod is designed to work with all mods (sans those that come with their own 
 * `hpbar_rekt` (server): Set whether to count and show the number of players killed by a monster. You need to restart the map after altering this variable to apply the changes. (default: true)
 * `hpbar_announcer` (user): Whether to play announcer messages and voices when monsters achieve certain kills. (default: true)
 
+### In LANGUAGE lump
+
 ### `hpbar_name_*`
 
-Server hosts can customize the display name of monsters by setting the `hpbar_name_$actor` cvar. This can be useful if you are loading mods that aren't supported by hpbar yet or want to change the default formatting set by hpbar. For example, you can make Cacodemons (actor name: `Cacodemon`) to be displayed as `Hissy` by setting:
+Server hosts can customize the display name of monsters by setting the `hpbar_name_$actor` in LANGUAGE. This can be useful if you are loading mods that aren't supported by hpbar yet or want to change the default formatting set by hpbar. For example, you can make Cacodemons (actor name: `Cacodemon`) to be displayed as `Hissy` by setting:
 
 ```
-set hpbar_name_Cacodemon Hissy
+[enu default]
+hpbar_name_Cacodemon = "Hissy";
 ```
 
 ### `hpbar_track_*`
@@ -39,7 +38,8 @@ set hpbar_name_Cacodemon Hissy
 You can control whether a monster is tracked by the HP tracker by setting `hpbar_track_$actor` to `1` (always track) or `-1` (never track). This takes precedence over `hpbar_tracker_threshold` which allows you to set it on a per monster basis. For instance, to always track Cacodemons:
 
 ```
-set hpbar_track_Cacodemon true
+[enu default]
+hpbar_track_Cacodemon = 1;
 ```
 
 ### `hpbar_map_*`
@@ -51,6 +51,9 @@ This provides a normalization mapping from actor names to actor names to be used
 To support customized names for monsters in your mod, simply add the name to be displayed in the `TAG` property of the monster actor. Monsters with the `BOSS` flag set is also tracked by default regardless of its HP.
 
 ## Changelogs
+
+### v25
+WIP
 
 ### v24e
 Уменьшен используемый трафик.
@@ -101,6 +104,7 @@ To support customized names for monsters in your mod, simply add the name to be 
 Теперь в списке трекера дружественные мобы выделяются надписью [friendly].
 
 ### v18
+Больше не поддерживается Zandronum 2.1.2.
 Теперь хпбар не меняет TID на акторе.
 Теперь если у актора уже есть TID и он уникален, то прицелевание на такого актора работает как и в 16 версии с расстояния в 8192 мап юнитов.
 Уделены неиспользуемые скрипты.
