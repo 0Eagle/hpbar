@@ -5,6 +5,14 @@ OptionValue "MDhpbar_style"
 	0, "DISABLE"
 }
 
+OptionValue "HpbarTrackerScale"
+{
+	0, "Blind"
+	1, "Sighted"
+	2, "Eagle eye"
+	3, "Deadshot"
+}
+
 OPTIONMENU "HPBarConsoleVariables"
 {
 	TITLE "HPBAR OPTIONS"
@@ -16,4 +24,7 @@ OPTIONMENU "HPBarConsoleVariables"
 	SLIDER "THRESHOLD","hpbar_threshold", 0, 5000, 100 , 0
 	OPTION "TRACKER","hpbar_tracker","ONOFF"
 	SLIDER "TRACKER THRESHOLD", "hpbar_tracker_threshold", 0, 5000, 100 , 0
+	OPTION "TRACKER SCALE","hpbar_tracker_scale","HpbarTrackerScale"
+	SLIDER "TRACKER POSITION X", "hpbar_tracker_x_offset", -25, 25, 1, 0
+	SLIDER "TRACKER POSITION Y", "hpbar_tracker_y_offset", -25, 25, 1, 0
 }
