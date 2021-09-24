@@ -15,9 +15,10 @@ int MaxClientsCount = 0;
 
 #define FULL_HUD_WIDTH					800
 #define FULL_HUD_HEIGHT					600
-#define FULL_HOLDTIME					0.25
+#define FULL_HOLDTIME					0.2
 #define FULL_FADETIME					0.2
-#define FULL_FADETIME_SECOND			0.025
+#define FULL_HOLDTIME_SECOND			0.1
+#define FULL_FADETIME_SECOND			0.5
 #define FULL_HPBAR_X					400.0
 #define FULL_HPBAR_Y					40.0
 #define FULL_HPBAR_X_OFFSET				5.0
@@ -320,10 +321,10 @@ function void set_linespritename(int hp_percentage, int hp, int max_hp)
 	}
 }
 
-function void draw_line_hpbar(int hp_percentage, int i, int fadetime)
+function void draw_line_hpbar(int hp_percentage, int i, int holdtime, int fadetime)
 {
 	SetHudClipRect(to_int(FULL_HPBAR_X+FULL_HPBAR_X_OFFSET-100.0),to_int(FULL_HPBAR_Y+FULL_HPBAR_Y_OFFSET-9.0),hp_percentage*2,18,200);
-	HudMessageBold(s:"A"; HUDMSG_FADEOUT,HUD_LINE_PERCENT_ID+i,CR_UNTRANSLATED,FULL_HPBAR_X+FULL_HPBAR_X_OFFSET,FULL_HPBAR_Y+FULL_HPBAR_Y_OFFSET,FULL_HOLDTIME,fadetime);
+	HudMessageBold(s:"A"; HUDMSG_FADEOUT,HUD_LINE_PERCENT_ID+i,CR_UNTRANSLATED,FULL_HPBAR_X+FULL_HPBAR_X_OFFSET,FULL_HPBAR_Y+FULL_HPBAR_Y_OFFSET,holdtime,fadetime);
 	SetHudClipRect(0,0,0,0,0);
 }
 
@@ -335,7 +336,7 @@ function void HPBarLineStateMsg(str statemsg, int ln)
 function void show_full_hpbar(int hp, int max_hp, int hp_percentage, str name, int flags)
 {
 	SetFont("HPBAR");
-	HudMessageBold(s:"A"; HUDMSG_FADEOUT,HUD_LINE_BAR_ID,CR_UNTRANSLATED,FULL_HPBAR_X,FULL_HPBAR_Y,FULL_HOLDTIME,FULL_FADETIME);
+	HudMessageBold(s:"A"; HUDMSG_FADEOUT,HUD_LINE_BAR_ID,CR_UNTRANSLATED,FULL_HPBAR_X,FULL_HPBAR_Y,FULL_HOLDTIME,FULL_FADETIME_SECOND);
 	SetFont(DEFAULT_FONT);
 	HudMessageBold(d:hp,s:" / ",d:max_hp,s:" (",d:hp_percentage,s:"%)"; HUDMSG_FADEOUT,HUD_TEXT_PERCENT_ID,CR_WHITE,FULL_HPBAR_X,FULL_HPBAR_Y,FULL_HOLDTIME,FULL_FADETIME);
 	HudMessageBold(s:name; HUDMSG_FADEOUT,HUD_TEXT_TARGET_NAME_ID,CR_WHITE,FULL_HPBAR_X,FULL_NAME_Y,FULL_HOLDTIME,FULL_FADETIME);
@@ -566,7 +567,7 @@ function str HPBarGetActorInfo(int i)
 		tracked_hps[i] = GetActorProperty(0,APROP_Health);
 		tracked_max_hps[i] = get_max_hp();
 		tracked_kills[i] = CheckInventory("MonsterScore");
-		tracked_flags[i] = get_flags();
+		tracked_flags[i] = get_flags() + (tracked_kills[i]<<16);
 		tracked_name[i] = get_actor_name();
 	}
 	return tracked_name[i];
@@ -574,11 +575,12 @@ function str HPBarGetActorInfo(int i)
 
 function void HPBarResetActorInfo(int i)
 {
+	tracked_counter[i] = 0;
 	tracked_hps[i] = 0;
 	tracked_max_hps[i] = 0;
 	tracked_kills[i] = 0;
 	tracked_flags[i] = 0;
-	tracked_counter[i] = 0;
+	tracked_name[i] = "";
 	SetCVarString(StrParam(s:"hpbar_tracked_names", d:i),"");
 }
 
@@ -590,21 +592,12 @@ function void clear_tracklist(void)
 	}
 }
 //==============================================================================
-script "Copy_tracked_tid_and_MaxHP_to_Clientside" (int i, int tid, int max_hps) CLIENTSIDE
-{
-	tracked_tids[i] = tid;
-	tracked_max_hps[i] = max_hps;
-}
-
-script "Copy_HP_and_Kills_to_Clientside" (int i, int hp, int kills) CLIENTSIDE
+script "Copy_ActorInfo_to_Clientside" (int i,  int hp, int max_hp, int tracked_flags_) CLIENTSIDE
 {
 	tracked_hps[i] = hp;
-	tracked_kills[i] = kills;
-}
-
-script "Copy_Invul_Reflect_Friendly_to_Clientside" (int i, int tracked_flags_) CLIENTSIDE
-{
+	tracked_max_hps[i] = max_hp;
 	tracked_flags[i] = tracked_flags_;
+	tracked_kills[i] = tracked_flags_ >> 16;
 }
 //==============================================================================
 script "HPBar_Open" OPEN
@@ -658,7 +651,7 @@ script "HPBar_ReOpen" REOPEN
 script "HPBar_Open-cs" OPEN CLIENTSIDE
 {
 	delay(35+(ConsolePlayerNumber()/4));
-	int x,y,rank,hp_limit,maxhp_limit,i,tid,max_hp,hp,n,hpp,kills,TRACKER_HUD_WIDTH,TRACKER_HUD_HEIGHT,tracker_scale,hpbar_tracker_x_,hpbar_tracker_y_;
+	int x,y,rank,hp_limit,maxhp_limit,i,hp,max_hp,n,hpp,kills,TRACKER_HUD_WIDTH,TRACKER_HUD_HEIGHT,tracker_scale,hpbar_tracker_x_,hpbar_tracker_y_;
 	bool friendly_show;
 	str name,statemsg,killsmsg;
 	bool hpbar_tracker_srv = GetCVar("hpbar_tracker_srv");
@@ -703,8 +696,7 @@ script "HPBar_Open-cs" OPEN CLIENTSIDE
 				maxhp_limit = 0;
 				for(i = 0; i < MAX_TRACKERS; i++)
 				{
-					tid = tracked_tids[i];
-					if((tid > 0) && (!tracked_tids_select[i]))
+					if((tracked_hps[i] > 0) && (!tracked_tids_select[i]))
 					{
 						hp = tracked_hps[i];
 						max_hp = tracked_max_hps[i];
@@ -759,7 +751,7 @@ script "HPBar_Open-cs" OPEN CLIENTSIDE
 					}
 					else
 					{
-						tracked_tids[n] = 0;
+						tracked_hps[n] = 0;
 						break;
 					}
 				}
@@ -894,19 +886,19 @@ script "HPBar_LinebarView" (int p_num, int hp, int max_hp, int flags) CLIENTSIDE
 	{
 		if(((flags & FLAG_FRIENDLY) == 0) || get_bool_user_cvar("hpbar_show_friendly"))
 		{
-			int hp_percentage = percent(hp,max_hp,100,true);
+			int hp_percentage;
 			int style = GetUserCVar(p_num,"hpbar_style");
 			if(style == STYLE_FULL)
 			{
+				hp_percentage = percent(hp,max_hp,100,true);
 				SetHudSize(FULL_HUD_WIDTH, FULL_HUD_HEIGHT, true);
 				show_full_hpbar(hp, max_hp, hp_percentage, get_actor_name(), flags);
-				set_linespritename(hp_percentage,hp,max_hp);
-				draw_line_hpbar(hp_percentage, 0, FULL_FADETIME);
-				delay(3);
-				draw_line_hpbar(hp_percentage, 1, FULL_FADETIME_SECOND);
+				set_linespritename(hp_percentage, hp, max_hp);
+				draw_line_hpbar(hp_percentage, hp_percentage, FULL_HOLDTIME_SECOND, FULL_FADETIME_SECOND);
 			}
 			else if(style == STYLE_MINIMAL)
 			{
+				hp_percentage = percent(hp,max_hp,100,true);
 				show_minimal_hpbar(hp_percentage);
 			}
 		}
@@ -932,27 +924,16 @@ script "HPBar_TrackerView" (int force_track)
 				tracked_broadcast[i] = true;
 				str name = HPBarGetActorInfo(i);
 				str name_cvar = StrParam(s:"hpbar_tracked_names", d:i);
-				int old_hp,old_kills,old_flags;
+				int old_hp,old_maxhp,old_kills,old_flags;
 				while(ActorIsExists(tracked_tid) && CheckActorClass(tracked_tid,"hpbar-tracker"))
 				{
 					if(SetActivator(tracked_tid) == 1)//switching to the tracker.
 					{
 						SetUserVariable(0,"user_tracked_num",i+1);
 						SetActorProperty(0,APROP_ReactionTime,35);
-						if(tracked_broadcast[i])
+						if(tracked_broadcast[i] || (old_hp != tracked_hps[i]) || (old_maxhp != tracked_max_hps[i]) || (old_kills != tracked_kills[i]) || (old_flags != tracked_flags[i]))
 						{
-							// Send monster Max HP
-							ACS_NamedExecuteWithResult("Copy_tracked_tid_and_MaxHP_to_Clientside",i,tracked_tids[i],tracked_max_hps[i]);
-						}
-						if(tracked_broadcast[i] || (old_hp != tracked_hps[i]) || (old_kills != tracked_kills[i]))
-						{
-							// Send monster HP
-							ACS_NamedExecuteWithResult("Copy_HP_and_Kills_to_Clientside",i,tracked_hps[i],tracked_kills[i]);
-						}
-						if(tracked_broadcast[i] || (old_flags != tracked_flags[i]))
-						{
-							// Send monster invul, reflect, friendly
-							ACS_NamedExecuteWithResult("Copy_Invul_Reflect_Friendly_to_Clientside",i,tracked_flags[i]);
+							ACS_NamedExecuteWithResult("Copy_ActorInfo_to_Clientside",i,tracked_hps[i],tracked_max_hps[i],tracked_flags[i]);
 						}
 						if(tracked_broadcast[i] || (!streq(GetCVarString(name_cvar),name)))
 						{
@@ -960,6 +941,7 @@ script "HPBar_TrackerView" (int force_track)
 							SetCVarString(name_cvar,name);
 						}
 						old_hp = tracked_hps[i];
+						old_maxhp = tracked_max_hps[i];
 						old_kills = tracked_kills[i];
 						old_flags = tracked_flags[i];
 						delay(1);
@@ -988,7 +970,7 @@ script "HPBar_TrackerView" (int force_track)
 				if(tracked_tid == tracked_tids[i])
 				{
 					HPBarResetActorInfo(i);
-					ACS_NamedExecuteWithResult("Copy_tracked_tid_and_MaxHP_to_Clientside",i,0,0);
+					ACS_NamedExecuteWithResult("Copy_ActorInfo_to_Clientside",i,0,0,0);
 				}
 				if((SetActivator(tracked_tid,AAPTR_TARGET) == 1) && CheckActorClass(tracked_tid,"hpbar-tracker"))
 				{
@@ -1012,7 +994,7 @@ script "HPBar_TargetDeath" (void) //A crutch for the network shit code.
 	{
 		i--;
 		HPBarResetActorInfo(i);
-		ACS_NamedExecuteWithResult("Copy_tracked_tid_and_MaxHP_to_Clientside",i,0,0);
+		ACS_NamedExecuteWithResult("Copy_ActorInfo_to_Clientside",i,0,0,0);
 		Thing_ChangeTID(0,0);
 		if(SetActivator(0,AAPTR_TARGET) == 1)
 		{
