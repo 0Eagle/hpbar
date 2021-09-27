@@ -323,6 +323,7 @@ function void set_linespritename(int hp_percentage, int hp, int max_hp)
 
 function void draw_line_hpbar(int hp_percentage, int i, int holdtime, int fadetime)
 {
+	if(hp_percentage > 100)hp_percentage = 100;
 	SetHudClipRect(to_int(FULL_HPBAR_X+FULL_HPBAR_X_OFFSET-100.0),to_int(FULL_HPBAR_Y+FULL_HPBAR_Y_OFFSET-9.0),hp_percentage*2,18,200);
 	HudMessageBold(s:"A"; HUDMSG_FADEOUT,HUD_LINE_PERCENT_ID+i,CR_UNTRANSLATED,FULL_HPBAR_X+FULL_HPBAR_X_OFFSET,FULL_HPBAR_Y+FULL_HPBAR_Y_OFFSET,holdtime,fadetime);
 	SetHudClipRect(0,0,0,0,0);
