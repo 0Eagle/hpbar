@@ -321,11 +321,11 @@ function void set_linespritename(int hp_percentage, int hp, int max_hp)
 	}
 }
 
-function void draw_line_hpbar(int hp_percentage, int i, int holdtime, int fadetime)
+function void draw_line_hpbar(int hp_percentage, int holdtime, int fadetime)
 {
 	if(hp_percentage > 100)hp_percentage = 100;
 	SetHudClipRect(to_int(FULL_HPBAR_X+FULL_HPBAR_X_OFFSET-100.0),to_int(FULL_HPBAR_Y+FULL_HPBAR_Y_OFFSET-9.0),hp_percentage*2,18,200);
-	HudMessageBold(s:"A"; HUDMSG_FADEOUT,HUD_LINE_PERCENT_ID+i,CR_UNTRANSLATED,FULL_HPBAR_X+FULL_HPBAR_X_OFFSET,FULL_HPBAR_Y+FULL_HPBAR_Y_OFFSET,holdtime,fadetime);
+	HudMessageBold(s:"A"; HUDMSG_FADEOUT,HUD_LINE_PERCENT_ID+hp_percentage,CR_UNTRANSLATED,FULL_HPBAR_X+FULL_HPBAR_X_OFFSET,FULL_HPBAR_Y+FULL_HPBAR_Y_OFFSET,holdtime,fadetime);
 	SetHudClipRect(0,0,0,0,0);
 }
 
@@ -895,7 +895,7 @@ script "HPBar_LinebarView" (int p_num, int hp, int max_hp, int flags) CLIENTSIDE
 				SetHudSize(FULL_HUD_WIDTH, FULL_HUD_HEIGHT, true);
 				show_full_hpbar(hp, max_hp, hp_percentage, get_actor_name(), flags);
 				set_linespritename(hp_percentage, hp, max_hp);
-				draw_line_hpbar(hp_percentage, hp_percentage, FULL_HOLDTIME_SECOND, FULL_FADETIME_SECOND);
+				draw_line_hpbar(hp_percentage, FULL_HOLDTIME_SECOND, FULL_FADETIME_SECOND);
 			}
 			else if(style == STYLE_MINIMAL)
 			{
