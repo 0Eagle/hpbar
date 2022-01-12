@@ -792,11 +792,13 @@ script "HPBar_HitTarget" (void)
 	}
 	while(PlayerInGame(p_num) && ActorIsAlive(0))
 	{
-		while(PlayerInGame(p_num) && ActorIsAlive(0) && ((CheckPlayerCamera(p_num) == -1) || (CheckPlayerCamera(p_num) == ActivatorTID())))
+		while(PlayerInGame(p_num) && ((CheckPlayerCamera(p_num) == -1) || (CheckPlayerCamera(p_num) == ActivatorTID())))
 		{
-			LineAttack(0,GetActorAngle(0),GetActorPitch(0),0,"hpbar-testing-puff","None",8192.0,FHF_NORANDOMPUFFZ|FHF_NOIMPACTDECAL,0);
+			if(ActorIsAlive(0))LineAttack(0,GetActorAngle(0),GetActorPitch(0),0,"hpbar-testing-puff","None",8192.0,FHF_NORANDOMPUFFZ|FHF_NOIMPACTDECAL,0);
+			else break;
 			delay(1);
-			LineAttack(0,GetActorAngle(0),GetActorPitch(0),0,"hpbar-testing-thru-puff","None",8192.0,FHF_NORANDOMPUFFZ|FHF_NOIMPACTDECAL,0);
+			if(ActorIsAlive(0))LineAttack(0,GetActorAngle(0),GetActorPitch(0),0,"hpbar-testing-thru-puff","None",8192.0,FHF_NORANDOMPUFFZ|FHF_NOIMPACTDECAL,0);
+			else break;
 			delay(1);
 		}
 		while(PlayerInGame(p_num) && ActorIsAlive(0) && !((CheckPlayerCamera(p_num) == -1) || (CheckPlayerCamera(p_num) == ActivatorTID())))

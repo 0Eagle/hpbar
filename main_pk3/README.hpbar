@@ -54,6 +54,9 @@ To support customized names for monsters in your mod, simply add the name to be 
 
 ## Changelogs
 
+### v25b
+Поставлен костыль для зандронума. Нельзя использовать LineAttack если актор мёртв и/или замёрз и рассыпался, иначе зандронум крашится.
+
 ### v25
 Уменьшен используемый трафик.
 Все текстовые сообщения из acs перенесены в language lump.
