@@ -51,14 +51,17 @@ int MaxClientsCount = 0;
 #define DEFAULT_FONT					"SMALLFONT"
 //Text ID
 #define HUD_TEXT_PERCENT_ID				6000
-#define HUD_LINE_PERCENT_ID				6001
-#define HUD_LINE_BAR_ID					6102
-#define HUD_TEXT_TARGET_NAME_ID			6103
-#define HUD_TEXT_TARGET_PROP_ID			6104
+#define HUD_LINE_ARM_PERCENT_ID			6001
+#define HUD_LINE_HP_PERCENT_ID			6101
+#define HUD_LINE_BAR_ID					6202
+#define HUD_TEXT_TARGET_NAME_ID			6203
+#define HUD_TEXT_TARGET_PROP_ID			6204
 #define HUD_TEXT_TRACKER_NAME_ID		7000
 #define HUD_TEXT_ANN_KILLER_NAME_ID		7100
 #define HUD_TEXT_ANN_TAUNT_ID			7102
 #define HUD_TEXT_ANN_KILLER_SCORE_ID	7101
+//Armor
+#define DEFAULTARMOR					"BasicArmor"
 
 bool tracked_broadcast[MAX_TRACKERS];
 int tracked_counter[MAX_TRACKERS];
@@ -152,11 +155,6 @@ function int percent(int current, int maximum, int maxpercent, bool overflow)
 	return percentage;
 }
 
-function bool get_bool_user_cvar(str cvar)
-{
-	return GetUserCVar(ConsolePlayerNumber(),cvar);
-}
-
 function void reset_selected(void)
 {
 	for(int i = 0; i < MAX_TRACKERS; i++)
@@ -241,7 +239,7 @@ function int GetOrSetMonsterTrackNum(void)
 	return -1;
 }
 
-function int GetLineTrackNum(int LineTrackNum, int PuffTID, bool drone)
+function int GetLineTrackNum(int LineTrackNum, int PuffTID, int type)
 {
 	if((LineTrackNum > 0) && ActorIsExists(LineTrackNum) && CheckActorClass(LineTrackNum,"hpbarline-tracker") && IsPointerEqual(AAPTR_Tracer,AAPTR_Target,PuffTID,LineTrackNum))
 	{
@@ -258,18 +256,25 @@ function int GetLineTrackNum(int LineTrackNum, int PuffTID, bool drone)
 			if(SetActivator(TrackNum) == 1)
 			{
 				//Copy the player's pointer.
-				if(drone)
+				switch(type)
 				{
-					if((SetActivator(PuffTID,AAPTR_Target) == 1) && (SetActivator(0,AAPTR_Master) == 1))
-					{
-						TrackNum2 = UniqueTID(0,0);
-						SpawnProjectile(0,"hpbarline-tracker",0,0,0,0,TrackNum2);
-						if(ActorIsExists(TrackNum2) && CheckActorClass(TrackNum2,"hpbarline-tracker"))
+					case 1://Monster
+						if((SetActivator(PuffTID,AAPTR_Target) == 1) && (SetActivator(0,AAPTR_Master) == 1))
 						{
-							if(SetActivator(TrackNum) == 1)
+							TrackNum2 = UniqueTID(0,0);
+							SpawnProjectile(0,"hpbarline-tracker",0,0,0,0,TrackNum2);
+							if(ActorIsExists(TrackNum2) && CheckActorClass(TrackNum2,"hpbarline-tracker"))
 							{
-								SetPointer(AAPTR_Master,TrackNum2,AAPTR_Target,PTROP_UNSAFETARGET|PTROP_UNSAFEMASTER);
-								SetActorProperty(TrackNum2,APROP_ReactionTime,0);
+								if(SetActivator(TrackNum) == 1)
+								{
+									SetPointer(AAPTR_Master,TrackNum2,AAPTR_Target,PTROP_UNSAFETARGET|PTROP_UNSAFEMASTER);
+									SetActorProperty(TrackNum2,APROP_ReactionTime,0);
+								}
+							}
+							else
+							{
+								SetActorProperty(TrackNum,APROP_ReactionTime,0);
+								return 0;
 							}
 						}
 						else
@@ -277,16 +282,36 @@ function int GetLineTrackNum(int LineTrackNum, int PuffTID, bool drone)
 							SetActorProperty(TrackNum,APROP_ReactionTime,0);
 							return 0;
 						}
-					}
-					else
-					{
-						SetActorProperty(TrackNum,APROP_ReactionTime,0);
-						return 0;
-					}
-				}
-				else
-				{
-					SetPointer(AAPTR_Master,PuffTID,AAPTR_Target,PTROP_UNSAFETARGET|PTROP_UNSAFEMASTER);
+						break;
+					case 2://Missile
+						if((SetActivator(PuffTID,AAPTR_Target) == 1) && (SetActivator(0,AAPTR_Target) == 1))
+						{
+							TrackNum2 = UniqueTID(0,0);
+							SpawnProjectile(0,"hpbarline-tracker",0,0,0,0,TrackNum2);
+							if(ActorIsExists(TrackNum2) && CheckActorClass(TrackNum2,"hpbarline-tracker"))
+							{
+								if(SetActivator(TrackNum) == 1)
+								{
+									SetPointer(AAPTR_Master,TrackNum2,AAPTR_Target,PTROP_UNSAFETARGET|PTROP_UNSAFEMASTER);
+									SetActorProperty(TrackNum2,APROP_ReactionTime,0);
+								}
+							}
+							else
+							{
+								SetActorProperty(TrackNum,APROP_ReactionTime,0);
+								return 0;
+							}
+						}
+						else
+						{
+							SetActorProperty(TrackNum,APROP_ReactionTime,0);
+							return 0;
+						}
+						break;
+					default:
+						SetPointer(AAPTR_Master,PuffTID,AAPTR_Target,PTROP_UNSAFETARGET|PTROP_UNSAFEMASTER);
+						break;
+
 				}
 				//Return to the monster.
 				if(SetActivator(TrackNum,AAPTR_Target) == 1)
@@ -309,37 +334,25 @@ function str hpp_to_color(int p)
 	return "\c[x5]";
 }
 
-function void set_linespritename(int hp_percentage, int hp, int max_hp)
-{
-	if(hp_percentage > 100)
-	{
-		SetFont(StrParam(s:"FILL",i:percent(hp,max_hp,14,false)));
-	}
-	else
-	{
-		SetFont(StrParam(s:"FILL",i:hp_percentage/10));
-	}
-}
-
-function void draw_line_hpbar(int hp_percentage, int holdtime, int fadetime)
-{
-	if(hp_percentage > 100)hp_percentage = 100;
-	SetHudClipRect(to_int(FULL_HPBAR_X+FULL_HPBAR_X_OFFSET-100.0),to_int(FULL_HPBAR_Y+FULL_HPBAR_Y_OFFSET-9.0),hp_percentage*2,18,200);
-	HudMessageBold(s:"A"; HUDMSG_FADEOUT,HUD_LINE_PERCENT_ID+hp_percentage,CR_UNTRANSLATED,FULL_HPBAR_X+FULL_HPBAR_X_OFFSET,FULL_HPBAR_Y+FULL_HPBAR_Y_OFFSET,holdtime,fadetime);
-	SetHudClipRect(0,0,0,0,0);
-}
-
 function void HPBarLineStateMsg(str statemsg, int ln)
 {
 	HudMessageBold(l:statemsg; HUDMSG_FADEOUT, HUD_TEXT_TARGET_PROP_ID + ln, CR_WHITE, FULL_HPBAR_X, FULL_INFO_Y + to_fixed(ln * 10), FULL_HOLDTIME, FULL_FADETIME);
 }
 
-function void show_full_hpbar(int hp, int max_hp, int hp_percentage, str name, int flags)
+function void show_full_hpbar(int hp_percentage, int hp, int max_hp, int armor, str name, int flags, int holdtime, int fadetime)
 {
+	SetHudSize(FULL_HUD_WIDTH, FULL_HUD_HEIGHT, true);
 	SetFont("HPBAR");
 	HudMessageBold(s:"A"; HUDMSG_FADEOUT,HUD_LINE_BAR_ID,CR_UNTRANSLATED,FULL_HPBAR_X,FULL_HPBAR_Y,FULL_HOLDTIME,FULL_FADETIME_SECOND);
 	SetFont(DEFAULT_FONT);
-	HudMessageBold(d:hp,s:" / ",d:max_hp,s:" (",d:hp_percentage,s:"%)"; HUDMSG_FADEOUT,HUD_TEXT_PERCENT_ID,CR_WHITE,FULL_HPBAR_X,FULL_HPBAR_Y,FULL_HOLDTIME,FULL_FADETIME);
+	if(armor > 0)
+	{
+		HudMessageBold(s:"hp: ",d:hp,s:" arm: ",d:armor; HUDMSG_FADEOUT,HUD_TEXT_PERCENT_ID,CR_WHITE,FULL_HPBAR_X,FULL_HPBAR_Y,FULL_HOLDTIME,FULL_FADETIME);
+	}
+	else
+	{
+		HudMessageBold(d:hp,s:" / ",d:max_hp,s:" (",d:hp_percentage,s:"%)"; HUDMSG_FADEOUT,HUD_TEXT_PERCENT_ID,CR_WHITE,FULL_HPBAR_X,FULL_HPBAR_Y,FULL_HOLDTIME,FULL_FADETIME);
+	}
 	HudMessageBold(s:name; HUDMSG_FADEOUT,HUD_TEXT_TARGET_NAME_ID,CR_WHITE,FULL_HPBAR_X,FULL_NAME_Y,FULL_HOLDTIME,FULL_FADETIME);
 	int ln = 0;
 	if(flags & FLAG_REFLECTIVE)
@@ -372,13 +385,41 @@ function void show_full_hpbar(int hp, int max_hp, int hp_percentage, str name, i
 		HPBarLineStateMsg("HPBAR_LINE_STEALTH",ln);
 		ln++;
 	}
+	if(hp_percentage > 100)
+	{
+		hp_percentage = 100;
+		SetFont(StrParam(s:"FILL",i:percent(hp,max_hp,14,false)));
+	}
+	else
+	{
+		SetFont(StrParam(s:"FILL",i:hp_percentage/10));
+	}
+	//health
+	SetHudClipRect(to_int(FULL_HPBAR_X+FULL_HPBAR_X_OFFSET-100.0),to_int(FULL_HPBAR_Y+FULL_HPBAR_Y_OFFSET-9.0),hp_percentage*2,18,200);
+	HudMessageBold(s:"A"; HUDMSG_FADEOUT,HUD_LINE_HP_PERCENT_ID+hp_percentage,CR_UNTRANSLATED,FULL_HPBAR_X+FULL_HPBAR_X_OFFSET,FULL_HPBAR_Y+FULL_HPBAR_Y_OFFSET,holdtime,fadetime);
+	//armor
+	if(armor > 0)
+	{
+		SetFont("FILL15");
+		int arm_percentage = percent(armor,100,100,false);
+		SetHudClipRect(to_int(FULL_HPBAR_X+FULL_HPBAR_X_OFFSET-100.0),to_int(FULL_HPBAR_Y+FULL_HPBAR_Y_OFFSET-9.0),arm_percentage*2,18,200);
+		HudMessageBold(s:"A"; HUDMSG_FADEOUT,HUD_LINE_ARM_PERCENT_ID+arm_percentage,CR_UNTRANSLATED,FULL_HPBAR_X+FULL_HPBAR_X_OFFSET,FULL_HPBAR_Y+FULL_HPBAR_Y_OFFSET,holdtime,fadetime);
+	}
+	SetHudClipRect(0,0,0,0,0);
 }
 
-function void show_minimal_hpbar(int hp_percentage)
+function void show_minimal_hpbar(int hp_percentage, int armor)
 {
 	SetHudSize(MINIMAL_HUD_WIDTH, MINIMAL_HUD_HEIGHT, false);
 	SetFont(DEFAULT_FONT);
-	HudMessageBold(s:hpp_to_color(hp_percentage), d:hp_percentage, s:"%\c-";HUDMSG_FADEOUT, HUD_TEXT_PERCENT_ID, CR_UNTRANSLATED, MINIMAL_HP_X, MINIMAL_HP_Y, MINIMAL_HOLDTIME, MINIMAL_FADETIME);
+	if(armor > 0)
+	{
+		HudMessageBold(s:StrParam(s:"\c[g1]hp: ",s:hpp_to_color(hp_percentage)), d:hp_percentage, s:"%\c- \c[g1]arm: ",s:hpp_to_color(armor),d:armor,s:"\c-";HUDMSG_FADEOUT, HUD_TEXT_PERCENT_ID, CR_UNTRANSLATED, MINIMAL_HP_X, MINIMAL_HP_Y, MINIMAL_HOLDTIME, MINIMAL_FADETIME);
+	}
+	else
+	{
+		HudMessageBold(s:hpp_to_color(hp_percentage), d:hp_percentage, s:"%\c-";HUDMSG_FADEOUT, HUD_TEXT_PERCENT_ID, CR_UNTRANSLATED, MINIMAL_HP_X, MINIMAL_HP_Y, MINIMAL_HOLDTIME, MINIMAL_FADETIME);
+	}
 }
 
 function void announce(int priority, str sound, str bigtext, str smalltext, str tinytext)
@@ -688,7 +729,7 @@ script "HPBar_Open-cs" OPEN CLIENTSIDE
 		{
 			x = GetUserCVar(ConsolePlayerNumber(),"hpbar_tracker_x_offset") + to_int((hpbar_tracker_x_ - 0.5) * GetScreenWidth() / GetScreenHeight() * TRACKER_HUD_HEIGHT) + (TRACKER_HUD_WIDTH / 2);
 			y = to_fixed(GetUserCVar(ConsolePlayerNumber(),"hpbar_tracker_y_offset")) + to_fixed(to_int((hpbar_tracker_y_ - 0.5) * GetScreenHeight()) + (TRACKER_HUD_HEIGHT / 2));
-			friendly_show = get_bool_user_cvar("hpbar_show_friendly");
+			friendly_show = GetUserCVar(ConsolePlayerNumber(),"hpbar_show_friendly");
 			reset_selected();
 			for(rank = 0; rank < NUM_RANKINGS; rank++)
 			{
@@ -813,16 +854,31 @@ script "HPBar_GetTarget" (void)
 {
 	int PuffTID = HPBarSetTid();
 	int LineTrackNum;
-	bool drone = false;
+	int type = 0;
 	if(SetActivator(0,AAPTR_TARGET) == 1)
 	{
 		int p_num = PlayerNumber();
 		LineTrackNum = CheckInventory("MonsterAlreadyTrackedLine");
-		if((p_num < 0) && (SetActivator(0,AAPTR_MASTER) == 1))
+		if(p_num < 0)
 		{
-			drone = true;
-			p_num = PlayerNumber();
-			LineTrackNum = CheckInventory("MonsterAlreadyTrackedLine");
+			type = (1 * CheckFlag(0,"ISMONSTER")) + (2 * CheckFlag(0,"MISSILE"));
+			switch(type)
+			{
+				case 1:
+					if(SetActivator(0,AAPTR_MASTER) == 1)
+					{
+						p_num = PlayerNumber();
+						LineTrackNum = CheckInventory("MonsterAlreadyTrackedLine");
+					}
+					break;
+				case 2:
+					if(SetActivator(0,AAPTR_TARGET) == 1)
+					{
+						p_num = PlayerNumber();
+						LineTrackNum = CheckInventory("MonsterAlreadyTrackedLine");
+					}
+					break;
+			}
 		}
 		if((p_num >= 0) && (SetActivator(PuffTID,AAPTR_TRACER) == 1) && ActorIsAlive(0))
 		{
@@ -836,7 +892,7 @@ script "HPBar_GetTarget" (void)
 				}
 				if(max_hp >= GetCVar("hpbar_threshold"))
 				{
-					int NewLineTrackNum = GetLineTrackNum(LineTrackNum,PuffTID,drone);
+					int NewLineTrackNum = GetLineTrackNum(LineTrackNum,PuffTID,type);
 					if((NewLineTrackNum > 0) && (NewLineTrackNum != LineTrackNum))//launching a new line tracker.
 					{
 						//To the player.
@@ -845,15 +901,17 @@ script "HPBar_GetTarget" (void)
 							TakeInventory("MonsterAlreadyTrackedLine",INT_MAX);
 							GiveInventory("MonsterAlreadyTrackedLine",NewLineTrackNum);
 							LineTrackNum = CheckInventory("MonsterAlreadyTrackedLine");
-							int flags,hp;
+							int flags,hp,flags_p_num,armor;
 							while(PlayerInGame(p_num) && (NewLineTrackNum == LineTrackNum))
 							{
 								//To the monster.
 								if(SetActivator(NewLineTrackNum,AAPTR_Target) == 1)
 								{
 									flags = get_flags();
+									armor = CheckInventory(DEFAULTARMOR);
+									flags_p_num = (p_num & 511)+(flags<<16);
 									hp = GetActorProperty(0,APROP_Health) * !((flags & FLAG_DEAD) == FLAG_DEAD);
-									ACS_NamedExecuteWithResult("HPBar_LinebarView", p_num, hp, max_hp, flags);
+									ACS_NamedExecuteWithResult("HPBar_LinebarView", flags_p_num, hp, max_hp, armor);
 								}
 								else
 								{
@@ -883,26 +941,26 @@ script "HPBar_GetTarget" (void)
 }
 
 //The script is executed on behalf of the target (monster).
-script "HPBar_LinebarView" (int p_num, int hp, int max_hp, int flags) CLIENTSIDE
+script "HPBar_LinebarView" (int flags_p_num, int hp, int max_hp, int armor) CLIENTSIDE
 {
+	int flags = (flags_p_num>>16) & 255;
+	int p_num = flags_p_num & 511;
 	if(ConsolePlayerNumber() == p_num)
 	{
-		if(((flags & FLAG_FRIENDLY) == 0) || get_bool_user_cvar("hpbar_show_friendly"))
+		if(((flags & FLAG_FRIENDLY) == 0) || GetUserCVar(p_num,"hpbar_show_friendly"))
 		{
 			int hp_percentage;
 			int style = GetUserCVar(p_num,"hpbar_style");
-			if(style == STYLE_FULL)
+			Switch(style)
 			{
-				hp_percentage = percent(hp,max_hp,100,true);
-				SetHudSize(FULL_HUD_WIDTH, FULL_HUD_HEIGHT, true);
-				show_full_hpbar(hp, max_hp, hp_percentage, get_actor_name(), flags);
-				set_linespritename(hp_percentage, hp, max_hp);
-				draw_line_hpbar(hp_percentage, FULL_HOLDTIME_SECOND, FULL_FADETIME_SECOND);
-			}
-			else if(style == STYLE_MINIMAL)
-			{
-				hp_percentage = percent(hp,max_hp,100,true);
-				show_minimal_hpbar(hp_percentage);
+				case STYLE_FULL:
+					hp_percentage = percent(hp,max_hp,100,true);
+					show_full_hpbar(hp_percentage, hp, max_hp, armor, get_actor_name(), flags, FULL_HOLDTIME_SECOND, FULL_FADETIME_SECOND);
+					break;
+				case STYLE_MINIMAL:
+					hp_percentage = percent(hp,max_hp,100,true);
+					show_minimal_hpbar(hp_percentage, armor);
+					break;
 			}
 		}
 	}
@@ -1124,7 +1182,7 @@ script "HPBar_ShowScore" (int score, int score_temp)
 
 script "HPBar_Announcer" (int announcer_id_) CLIENTSIDE
 {
-	if(get_bool_user_cvar("hpbar_announcer"))
+	if(GetUserCVar(ConsolePlayerNumber(),"hpbar_announcer"))
 	{
 		if(GetCVar("hpbar_announcer_id") == announcer_id_)
 		{
